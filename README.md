@@ -2,6 +2,8 @@
 
 给小公司用的轻量级技术支持工作台。四个模块，砍到最小可用。
 
+[![CI](https://github.com/kevin12369/support-workbench/actions/workflows/ci.yml/badge.svg)](https://github.com/kevin12369/support-workbench/actions/workflows/ci.yml)
+
 | 模块 | 做什么 |
 |---|---|
 | **工单** | 提交 → AI 自动分类 → SLA 倒计时 → 状态流转 |
