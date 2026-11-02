@@ -2,7 +2,7 @@ services:
   backend:
     build:
       context: ./backend
-    container_name: sw-backend
+    container_name: polaris-backend
     restart: unless-stopped
     environment:
       # 生产环境务必修改
@@ -16,16 +16,16 @@ services:
       LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
     volumes:
       # SQLite 数据持久化，容器重建不丢数据
-      - sw-data:/app/data
+      - polaris-data:/app/data
     expose:
       - "8000"
     networks:
-      - sw-net
+      - polaris-net
 
   frontend:
     build:
       context: ./frontend
-    container_name: sw-frontend
+    container_name: polaris-frontend
     restart: unless-stopped
     ports:
       # 左边是宿主机端口，改成你公司服务器实际要用的端口
@@ -34,12 +34,12 @@ services:
       backend:
         condition: service_healthy
     networks:
-      - sw-net
+      - polaris-net
 
 volumes:
-  sw-data:
+  polaris-data:
     driver: local
 
 networks:
-  sw-net:
+  polaris-net:
     driver: bridge

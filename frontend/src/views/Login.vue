@@ -47,10 +47,10 @@ function switchMode() {
   <div class="login-page">
     <div class="login-card fade-in">
       <div class="login-head">
-        <div class="brand-mark">S</div>
-        <h1>支持工作台</h1>
+        <div class="brand-mark">✦</div>
+        <h1>北极星 Polaris</h1>
         <p class="muted">
-          {{ mode === 'login' ? '登录你的企业空间' : '30 秒开通一个独立空间' }}
+          {{ mode === 'login' ? '客服工单管理平台' : '30 秒开通一个独立空间' }}
         </p>
       </div>
 

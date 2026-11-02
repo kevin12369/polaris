@@ -1,8 +1,22 @@
-# 支持工作台
+# Polaris 北极星 · 客服工单管理平台
 
-给小公司用的轻量级技术支持工作台。四个模块，砍到最小可用。
+给中小企业的轻量级工单系统：让客户的每个问题都有记录、有回应、有沉淀。
 
-[![CI](https://github.com/kevin12369/support-workbench/actions/workflows/ci.yml/badge.svg)](https://github.com/kevin12369/support-workbench/actions/workflows/ci.yml)
+[![CI](https://github.com/kevin12369/polaris/actions/workflows/ci.yml/badge.svg)](https://github.com/kevin12369/polaris/actions/workflows/ci.yml)
+
+<p align="center">
+  <img src="docs/screenshots/02-dashboard.png" width="820" alt="仪表盘">
+</p>
+
+---
+
+## 为什么需要它
+
+小团队的客户服务通常长这样：客户在微信群里问问题，客服翻聊天记录找答案，
+解决完随手记在个人电脑上。问题重复问、响应快慢说不清、
+老员工一走经验就断了 —— 但因为「团队才十几个人」，一直没觉得需要买套系统。
+
+Polaris 把这套散落的做法收拢成四件事：
 
 | 模块 | 做什么 |
 |---|---|
@@ -11,17 +25,37 @@
 | **AI 排障助手** | 输入报错 → 检索知识库 → 输出可执行排查步骤 |
 | **仪表盘** | 工单量 / 平均响应时长 / 超时率 / 知识库命中率 |
 
+## 三个关键特点
+
+**装在自己服务器上，数据不出门。** 两个容器 + 一个 SQLite 文件，
+数据库就是磁盘上的一个文件，随时能备份、能迁移。不用把客户报障内容交给第三方。
+
+**不需要买 AI API。** 工单分类和知识库检索都由本地引擎完成，开箱即用。
+若要接入大模型，填一个 OpenAI 兼容接口地址即可（可选，不填功能也完整）。
+
+**十分钟能用起来。** 一条 `docker compose up` 命令，浏览器里自助开通一个
+独立空间就能开始录工单 —— 不用等实施、不用培训。
+
+## 适合谁
+
+- 5–50 人的软件服务商、系统集成商、SaaS 小团队
+- 有 1–3 个专职售后/技术支持岗，问题量已到「需要统计」的程度
+- 客户是 B 端（企业/门店），报障分散在各个微信群里
+
+**不适合**：已经在用 Zendesk / 企点 / 腾讯云智能客服等成熟客服系统的团队；
+人数少于 8 人且客服是老板兼职；以及以人头计费的纯外包派遣公司。
+
 技术栈：FastAPI + Vue 3 + SQLite + Docker。
 
 ---
 
 ## 一、10 分钟跑起来
 
-### 方式 A：Docker（推荐给小公司）
+### 方式 A：Docker（推荐）
 
 ```bash
-git clone https://github.com/kevin12369/support-workbench.git support-workbench
-cd support-workbench
+git clone https://github.com/kevin12369/polaris.git polaris
+cd polaris
 cp .env.example .env
 
 # 改掉 .env 里的 SECRET_KEY
@@ -32,7 +66,7 @@ docker compose up -d --build
 
 打开 `http://<服务器IP>:8080`，用「免费开通」自助注册一个企业空间即可开始用。
 
-数据存在 Docker 卷 `sw-data` 里，容器重建不丢。备份就是把整个卷复制出来。
+数据存在 Docker 卷 `polaris-data` 里，容器重建不丢。备份就是把整个卷复制出来。
 
 ### 方式 B：本地开发
 
@@ -205,6 +239,27 @@ docker compose restart backend
 ```
 
 健康检查：`curl http://<host>:8000/api/health`
+
+### 从旧版本名升级（support-workbench → polaris）
+
+项目改名时同步调整了 Docker 卷名。**如果你之前用旧名部署过，数据卷需要迁移一次**，
+否则 `docker compose up` 会起一个空库：
+
+```bash
+# 1. 先备份旧卷
+docker run --rm -v support-workbench_sw-data:/old -v $(pwd):/backup alpine \
+  tar czf /backup/old-sw-data.tar.gz -C /old .
+
+# 2. 把旧卷内容复制到新卷
+docker compose up -d backend          # 先起一次以创建新卷
+docker run --rm -v support-workbench_sw-data:/old -v polaris_polaris-data:/new alpine \
+  sh -c "cp -a /old/. /new/"
+
+# 3. 重启后端
+docker compose restart backend
+```
+
+如果还没部署过（首次使用），跳过这一步即可。
 
 ---
 

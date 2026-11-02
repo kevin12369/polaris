@@ -34,9 +34,9 @@ function logout() {
   <div v-else class="app-shell">
     <aside class="sidebar" :class="{ open: navOpen }">
       <div class="brand">
-        <div class="brand-mark">S</div>
+        <div class="brand-mark">✦</div>
         <div class="grow">
-          <div class="brand-name truncate">支持工作台</div>
+          <div class="brand-name truncate">北极星 Polaris</div>
           <div class="brand-sub truncate">{{ company?.name || '未命名企业' }}</div>
         </div>
       </div>
@@ -70,7 +70,7 @@ function logout() {
     <div class="main-area">
       <header class="topbar">
         <button class="btn btn-ghost btn-sm menu-btn" @click="navOpen = !navOpen">☰</button>
-        <div class="topbar-title">{{ route.meta.title || '支持工作台' }}</div>
+        <div class="topbar-title">{{ route.meta.title || '北极星 Polaris' }}</div>
         <div class="grow"></div>
         <span class="plan-pill">{{ company?.plan === 'trial' ? '试用版' : company?.plan || '试用版' }}</span>
       </header>

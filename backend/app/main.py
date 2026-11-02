@@ -15,7 +15,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title=APP_NAME,
         version=APP_VERSION,
-        description="小公司用的轻量级技术支持工作台：工单 / 知识库 / AI 排障 / 仪表盘",
+        description="Polaris 北极星 —— 给中小企业的轻量级工单系统：工单 / 知识库 / AI 排障助手 / 仪表盘",
     )
 
     app.add_middleware(

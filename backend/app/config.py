@@ -9,7 +9,7 @@ DATA_DIR = Path(os.getenv("DATA_DIR", str(BASE_DIR / "data")))
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 # ---- 基础 ----
-APP_NAME = "支持工作台 Support Workbench"
+APP_NAME = "Polaris 北极星 · 客服工单管理平台"
 APP_VERSION = "1.0.0"
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-me-in-production")
 TOKEN_TTL_HOURS = int(os.getenv("TOKEN_TTL_HOURS", "72"))
