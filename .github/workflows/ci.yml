@@ -1,6 +1,7 @@
 name: CI
 
-on:
+# 用引号包裹，避免部分 YAML 解析器把 on 当成布尔值
+"on":
   push:
     branches: [main]
   pull_request:
@@ -10,8 +11,6 @@ jobs:
   backend-test:
     name: 后端测试
     runs-on: ubuntu-latest
-    services:
-      # 端到端测试需要一个运行中的后端
     steps:
       - uses: actions/checkout@v4
 
@@ -31,22 +30,27 @@ jobs:
           python tests/test_sla.py
           python tests/test_retrieval.py
 
-      - name: 启动服务
+      - name: 端到端测试（启动服务后立即执行）
         working-directory: backend
         run: |
-          nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 8100 \
+          # 在同一 step 内启动服务并跑测试，避免后台进程在步骤切换时被清理
+          python -m uvicorn app.main:app --host 127.0.0.1 --port 8100 \
             > /tmp/uvicorn.log 2>&1 &
+          Uvicorn_PID=$!
+          trap "kill $Uvicorn_PID 2>/dev/null || true" EXIT
+
+          ready=0
           for i in $(seq 1 30); do
             if curl -sf http://127.0.0.1:8100/api/health > /dev/null; then
-              echo "服务已就绪"; break
+              ready=1; break
             fi
             sleep 1
           done
-          curl -sf http://127.0.0.1:8100/api/health || (cat /tmp/uvicorn.log && exit 1)
-
-      - name: 端到端测试
-        working-directory: backend
-        run: python tests/test_e2e.py
+          if [ "$ready" != "1" ]; then
+            echo "服务启动失败，日志如下："; cat /tmp/uvicorn.log; exit 1
+          fi
+          echo "服务已就绪，开始端到端测试"
+          python tests/test_e2e.py
 
   frontend-build:
     name: 前端构建
