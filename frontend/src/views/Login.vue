@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { authApi } from '../api'
 import { startSession } from '../store'
+import { t } from '../i18n'
 
 const router = useRouter()
 const route = useRoute()
@@ -48,38 +49,38 @@ function switchMode() {
     <div class="login-card fade-in">
       <div class="login-head">
         <div class="brand-mark">✦</div>
-        <h1>北极星 Polaris</h1>
+        <h1>{{ t('login.title') }}</h1>
         <p class="muted">
-          {{ mode === 'login' ? '客服工单管理平台' : '30 秒开通一个独立空间' }}
+          {{ mode === 'login' ? t('login.subtitle') : t('login.switchRegister') }}
         </p>
       </div>
 
       <form @submit.prevent="submit">
         <template v-if="mode === 'register'">
           <div class="field">
-            <label>公司 / 团队名称</label>
-            <input v-model="form.company_name" placeholder="例如：Acme 科技" required />
+            <label>{{ t('login.companyName') }}</label>
+            <input v-model="form.company_name" :placeholder="t('login.companyPlaceholder')" required />
           </div>
           <div class="field">
-            <label>你的姓名</label>
-            <input v-model="form.name" placeholder="例如：张三" required />
+            <label>{{ t('login.yourName') }}</label>
+            <input v-model="form.name" :placeholder="t('login.namePlaceholder')" required />
           </div>
           <div class="field">
-            <label>行业（选填）</label>
-            <input v-model="form.industry" placeholder="例如：企业软件" />
+            <label>{{ t('login.industry') }}</label>
+            <input v-model="form.industry" :placeholder="t('login.industryPlaceholder')" />
           </div>
         </template>
 
         <div class="field">
-          <label>邮箱</label>
+          <label>{{ t('login.email') }}</label>
           <input v-model="form.email" type="email" placeholder="you@company.com" required />
         </div>
         <div class="field">
-          <label>密码</label>
+          <label>{{ t('login.password') }}</label>
           <input
             v-model="form.password"
             type="password"
-            placeholder="至少 6 位"
+            :placeholder="t('login.passwordHint')"
             required
             minlength="6"
           />
@@ -88,19 +89,19 @@ function switchMode() {
         <div v-if="error" class="error-box">{{ error }}</div>
 
         <button class="btn btn-primary btn-block" type="submit" :disabled="loading">
-          {{ loading ? '处理中…' : mode === 'login' ? '登录' : '开通空间并进入' }}
+          {{ loading ? t('common.saving') : mode === 'login' ? t('login.submit') : t('login.submitRegister') }}
         </button>
       </form>
 
       <div class="login-foot">
-        <span class="muted">{{ mode === 'login' ? '还没有空间？' : '已有账号？' }}</span>
+        <span class="muted">{{ mode === 'login' ? t('login.hasAccount') : t('login.noAccount') }}</span>
         <button class="btn btn-ghost btn-sm" type="button" @click="switchMode">
-          {{ mode === 'login' ? '免费开通' : '去登录' }}
+          {{ mode === 'login' ? t('login.signup') : t('login.toLogin') }}
         </button>
       </div>
 
       <div v-if="mode === 'login'" class="demo-tip">
-        <strong>演示账号</strong>
+        <strong>{{ t('login.demoTitle') }}</strong>
         <span class="mono">demo@acme.com / demo1234</span>
       </div>
     </div>

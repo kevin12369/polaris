@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { dashboardApi } from '../api'
 import { fmtMinutes, fmtRemaining } from '../utils'
+import { t, catLabel, statusLabel } from '../i18n'
 
 const data = ref(null)
 const loading = ref(false)
@@ -79,34 +80,34 @@ const metrics = computed(() => data.value?.metrics || {})
 const cards = computed(() => [
   {
     key: 'total',
-    label: '工单量',
+    label: t('d.m.tickets'),
     value: metrics.value.total_tickets ?? 0,
     unit: '单',
-    sub: `待处理 ${metrics.value.open_tickets ?? 0} · 已解决 ${metrics.value.resolved_tickets ?? 0}`,
+    sub: t('d.m.ticketsSub', { a: metrics.value.open_tickets ?? 0, b: metrics.value.resolved_tickets ?? 0 }),
     tone: 'accent',
   },
   {
     key: 'resp',
-    label: '平均响应时长',
+    label: t('d.m.response'),
     value: fmtMinutes(metrics.value.avg_response_minutes ?? 0),
     unit: '',
-    sub: `响应超时率 ${metrics.value.response_timeout_rate ?? 0}%`,
+    sub: t('d.m.responseSub', { a: metrics.value.response_timeout_rate ?? 0 }),
     tone: metrics.value.response_timeout_rate > 10 ? 'danger' : 'ok',
   },
   {
     key: 'timeout',
-    label: '超时率',
+    label: t('d.m.timeout'),
     value: metrics.value.timeout_rate ?? 0,
     unit: '%',
-    sub: `超时 ${metrics.value.response_timeout_count ?? 0} 响应 / ${metrics.value.resolve_timeout_count ?? 0} 解决`,
+    sub: t('d.m.timeoutSub', { a: metrics.value.response_timeout_count ?? 0, b: metrics.value.response_timeout_count ?? 0, c: metrics.value.resolve_timeout_count ?? 0 }),
     tone: metrics.value.timeout_rate > 15 ? 'danger' : metrics.value.timeout_rate > 5 ? 'warn' : 'ok',
   },
   {
     key: 'kb',
-    label: '知识库命中率',
+    label: t('d.m.kb'),
     value: metrics.value.kb_hit_rate ?? 0,
     unit: '%',
-    sub: `${metrics.value.kb_linked_count ?? 0} 单已沉淀 · 共 ${metrics.value.kb_articles ?? 0} 条`,
+    sub: t('d.m.kbSub', { a: metrics.value.kb_linked_count ?? 0, b: metrics.value.kb_articles ?? 0 }),
     tone: (metrics.value.kb_hit_rate ?? 0) >= 50 ? 'ok' : 'warn',
   },
 ])
@@ -118,8 +119,8 @@ onMounted(load)
   <div class="dash">
     <div class="row-between" style="margin-bottom: 14px">
       <div>
-        <h2 style="margin: 0; font-size: 17px; font-weight: 600">服务概览</h2>
-        <span class="muted" style="font-size: 12.5px">近 {{ days }} 天</span>
+        <h2 style="margin: 0; font-size: 17px; font-weight: 600">{{ t('d.title') }}</h2>
+        <span class="muted" style="font-size: 12.5px">{{ t('d.last', { n: days }) }}</span>
       </div>
       <div class="row" style="gap: 6px">
         <button
@@ -129,13 +130,13 @@ onMounted(load)
           :class="{ 'btn-primary': days === d }"
           @click="days = d; load()"
         >
-          {{ d }} 天
+          {{ d }} {{ t('common.days') }}
         </button>
       </div>
     </div>
 
     <div v-if="error" class="error-box">{{ error }}</div>
-    <div v-if="loading" class="empty">加载中…</div>
+    <div v-if="loading" class="empty">{{ t('common.loading') }}</div>
 
     <template v-else-if="data">
       <!-- 指标卡 -->
@@ -152,14 +153,14 @@ onMounted(load)
       <!-- 趋势 -->
       <div class="card" style="margin-top: 14px">
         <div class="card-head">
-          <h3>工单趋势</h3>
+          <h3>{{ t('d.trend') }}</h3>
           <div class="row" style="gap: 12px">
-            <span class="legend"><i class="dot dot-created"></i>新建</span>
-            <span class="legend"><i class="dot dot-resolved"></i>解决</span>
+            <span class="legend"><i class="dot dot-created"></i>{{ t('d.trend.created') }}</span>
+            <span class="legend"><i class="dot dot-resolved"></i>{{ t('d.trend.resolved') }}</span>
           </div>
         </div>
         <div class="card-body">
-          <div v-if="!chart" class="empty">数据不足</div>
+          <div v-if="!chart" class="empty">{{ t('d.insufficient') }}</div>
           <svg v-else :viewBox="`0 0 ${chart.W} ${chart.H}`" class="trend-chart">
             <!-- 网格线 -->
             <line
@@ -222,11 +223,11 @@ onMounted(load)
       <!-- 分布 -->
       <div class="dist-grid">
         <div class="card">
-          <div class="card-head"><h3>分类分布</h3></div>
+          <div class="card-head"><h3>{{ t('d.byCategory') }}</h3></div>
           <div class="card-body">
-            <div v-if="!catBars.length" class="empty">暂无数据</div>
+            <div v-if="!catBars.length" class="empty">{{ t('d.noData') }}</div>
             <div v-for="r in catBars" :key="r.category" class="bar-row">
-              <span class="bar-label truncate">{{ r.category }}</span>
+              <span class="bar-label truncate">{{ catLabel(r.category) }}</span>
               <div class="bar-track">
                 <div class="bar-fill" :style="{ width: r.pct + '%' }"></div>
               </div>
@@ -236,9 +237,9 @@ onMounted(load)
         </div>
 
         <div class="card">
-          <div class="card-head"><h3>状态分布</h3></div>
+          <div class="card-head"><h3>{{ t('d.byStatus') }}</h3></div>
           <div class="card-body">
-            <div v-if="!statusBars.length" class="empty">暂无数据</div>
+            <div v-if="!statusBars.length" class="empty">{{ t('d.noData') }}</div>
             <div v-for="r in statusBars" :key="r.code" class="bar-row">
               <span class="bar-label truncate">{{ r.label }}</span>
               <div class="bar-track">
@@ -253,9 +254,9 @@ onMounted(load)
       <!-- 待办 + 高频 -->
       <div class="dist-grid">
         <div class="card">
-          <div class="card-head"><h3>待处理工单（按优先级）</h3></div>
+          <div class="card-head"><h3>{{ t('d.todo') }}</h3></div>
           <div class="card-body">
-            <div v-if="!data.recent?.length" class="empty">没有待处理工单</div>
+            <div v-if="!data.recent?.length" class="empty">{{ t('d.todoEmpty') }}</div>
             <RouterLink
               v-for="t in data.recent"
               :key="t.id"
@@ -276,11 +277,11 @@ onMounted(load)
 
         <div class="card">
           <div class="card-head">
-            <h3>高频知识条目</h3>
-            <span class="muted tiny">被检索命中次数</span>
+            <h3>{{ t('d.topKb') }}</h3>
+            <span class="muted tiny">{{ t('d.topKbSub') }}</span>
           </div>
           <div class="card-body">
-            <div v-if="!data.top_kb?.length" class="empty">暂无数据</div>
+            <div v-if="!data.top_kb?.length" class="empty">{{ t('d.noData') }}</div>
             <RouterLink
               v-for="a in data.top_kb"
               :key="a.id"

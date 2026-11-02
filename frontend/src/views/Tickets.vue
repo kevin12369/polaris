@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ticketApi } from '../api'
 import { fmtMinutes, fmtRemaining, PRIORITY_TONE, STATUS_TONE } from '../utils'
+import { t, catLabel, statusLabel, priLabel } from '../i18n'
 
 const router = useRouter()
 
@@ -80,7 +81,7 @@ onMounted(async () => {
       <input
         v-model="filters.q"
         class="search"
-        placeholder="搜索标题 / 描述 / 工单号…"
+        :placeholder="t('tickets.searchPlaceholder')"
         @keyup.enter="load"
       />
       <select v-model="filters.status" @change="load">
@@ -90,13 +91,13 @@ onMounted(async () => {
         <option v-for="p in priorityOptions" :key="p.code" :value="p.code">{{ p.label }}</option>
       </select>
       <select v-model="filters.category" @change="load">
-        <option value="all">全部分类</option>
+        <option value="all">{{ t('tickets.allCategory') }}</option>
         <option v-for="c in meta.categories" :key="c" :value="c">{{ c }}</option>
       </select>
-      <button class="btn" @click="resetFilters">重置</button>
+      <button class="btn" @click="resetFilters">{{ t('tickets.reset') }}</button>
       <div class="grow"></div>
-      <span class="muted total">共 {{ total }} 条</span>
-      <button class="btn btn-primary" @click="showCreate = true">＋ 新建工单</button>
+      <span class="muted total">{{ t('tickets.count', { n: total }) }}</span>
+      <button class="btn btn-primary" @click="showCreate = true">＋ {{ t('tickets.new') }}</button>
     </div>
 
     <div v-if="error" class="error-box">{{ error }}</div>
@@ -104,65 +105,65 @@ onMounted(async () => {
     <!-- 创建结果提示 -->
     <div v-if="created" class="result-banner fade-in">
       <div class="grow">
-        <strong>工单已创建</strong>
+        <strong>{{ t('tickets.createdSuccess') }}</strong>
         <span class="dim"> — AI 判定为「{{ created.ticket.category }}」/ {{ created.ticket.priority }}，
           置信度 {{ Math.round(created.ticket.confidence * 100) }}%</span>
         <div v-if="created.suggestions.length" class="suggest-line">
-          自动匹配知识库：
+          {{ t('tickets.suggestedKb') }}
           <span v-for="s in created.suggestions" :key="s.id" class="badge badge-info">{{ s.title }}</span>
         </div>
       </div>
-      <button class="btn btn-sm" @click="openDetail(created.ticket)">查看</button>
+      <button class="btn btn-sm" @click="openDetail(created.ticket)">{{ t('tickets.viewBtn') }}</button>
       <button class="btn btn-ghost btn-sm" @click="created = null">✕</button>
     </div>
 
     <!-- 列表 -->
     <div class="card table-wrap">
-      <div v-if="loading" class="empty">加载中…</div>
+      <div v-if="loading" class="empty">{{ t('common.loading') }}</div>
       <div v-else-if="!tickets.length" class="empty">
         <div class="empty-icon">▤</div>
-        还没有工单，点击「新建工单」开始
+        {{ t('tickets.empty') }}
       </div>
       <div v-else class="table-scroll">
         <table class="data">
           <thead>
             <tr>
-              <th style="width: 92px">编号</th>
-              <th>标题</th>
-              <th style="width: 96px">优先级</th>
-              <th style="width: 104px">分类</th>
-              <th style="width: 92px">状态</th>
-              <th style="width: 118px">解决倒计时</th>
-              <th style="width: 84px">创建</th>
+              <th style="width: 92px">{{ t('tickets.col.code') }}</th>
+              <th>{{ t('tickets.col.title') }}</th>
+              <th style="width: 96px">{{ t('tickets.col.priority') }}</th>
+              <th style="width: 104px">{{ t('tickets.col.category') }}</th>
+              <th style="width: 92px">{{ t('tickets.col.status') }}</th>
+              <th style="width: 118px">{{ t('tickets.col.sla') }}</th>
+              <th style="width: 84px">{{ t('tickets.col.created') }}</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="t in tickets" :key="t.id" @click="openDetail(t)">
-              <td class="mono muted">{{ t.code }}</td>
+            <tr v-for="tk in tickets" :key="tk.id" @click="openDetail(tk)">
+              <td class="mono muted">{{ tk.code }}</td>
               <td>
                 <div class="row" style="gap: 7px">
-                  <span class="truncate">{{ t.title }}</span>
-                  <span v-if="t.kb_hit" class="badge badge-info" title="已关联知识库">◫</span>
+                  <span class="truncate">{{ tk.title }}</span>
+                  <span v-if="tk.kb_hit" class="badge badge-info" title="已关联知识库">◫</span>
                 </div>
-                <div class="requester muted">{{ t.requester_name || '—' }}</div>
+                <div class="requester muted">{{ tk.requester_name || '—' }}</div>
               </td>
               <td>
-                <span class="badge" :class="`badge-${PRIORITY_TONE[t.priority]}`">{{ t.priority }}</span>
+                <span class="badge" :class="`badge-${PRIORITY_TONE[tk.priority]}`">{{ tk.priority }}</span>
               </td>
-              <td class="dim">{{ t.category }}</td>
+              <td class="dim">{{ catLabel(tk.category) }}</td>
               <td>
-                <span class="badge" :class="`badge-${STATUS_TONE[t.status]}`">{{ t.status_label }}</span>
+                <span class="badge" :class="`badge-${STATUS_TONE[tk.status]}`">{{ statusLabel(tk.status, tk.status_label) }}</span>
               </td>
               <td>
                 <span
                   class="mono"
-                  :class="t.sla_resolve_breached ? 'overdue' : t.sla_resolve_remaining < 120 ? 'soon' : 'muted'"
+                  :class="tk.sla_resolve_breached ? 'overdue' : tk.sla_resolve_remaining < 120 ? 'soon' : 'muted'"
                 >
-                  {{ fmtRemaining(t.sla_resolve_remaining) }}
+                  {{ fmtRemaining(tk.sla_resolve_remaining) }}
                 </span>
-                <div class="muted tiny">响应 {{ fmtMinutes(t.response_minutes) }}</div>
+                <div class="muted tiny">{{ t('tickets.responseTime', { t: fmtMinutes(tk.response_minutes) }) }}</div>
               </td>
-              <td class="muted tiny">{{ t.created_at?.slice(5, 10) }}</td>
+              <td class="muted tiny">{{ tk.created_at?.slice(5, 10) }}</td>
             </tr>
           </tbody>
         </table>
@@ -173,22 +174,22 @@ onMounted(async () => {
     <div v-if="showCreate" class="modal-mask" @click.self="showCreate = false">
       <div class="modal fade-in">
         <div class="modal-head">
-          <h3>新建工单</h3>
+          <h3>{{ t('tickets.form.title') }}</h3>
           <button class="btn btn-ghost btn-sm" @click="showCreate = false">✕</button>
         </div>
         <form class="modal-body" @submit.prevent="submitTicket">
           <div class="field">
-            <label>标题 *</label>
+            <label>{{ t('tickets.form.titleLabel') }}</label>
             <input
               v-model="newTicket.title"
               placeholder="一句话描述问题，例如：导出报表得到 0 行"
               required
               minlength="3"
             />
-            <div class="hint">留空分类与优先级，将由 AI 自动判定</div>
+            <div class="hint">{{ t('tickets.form.hint') }}</div>
           </div>
           <div class="field">
-            <label>详细描述</label>
+            <label>{{ t('tickets.form.detail') }}</label>
             <textarea
               v-model="newTicket.content"
               rows="5"
@@ -197,17 +198,17 @@ onMounted(async () => {
           </div>
           <div class="two-col">
             <div class="field">
-              <label>报障人</label>
+              <label>{{ t('tickets.form.requester') }}</label>
               <input v-model="newTicket.requester_name" placeholder="选填" />
             </div>
             <div class="field">
-              <label>报障人邮箱</label>
+              <label>{{ t('tickets.form.requesterEmail') }}</label>
               <input v-model="newTicket.requester_email" type="email" placeholder="选填" />
             </div>
           </div>
           <div class="modal-foot">
-            <button type="button" class="btn" @click="showCreate = false">取消</button>
-            <button type="submit" class="btn btn-primary">提交并自动分类</button>
+            <button type="button" class="btn" @click="showCreate = false">{{ t('common.cancel') }}</button>
+            <button type="submit" class="btn btn-primary">{{ t('tickets.form.submit') }}</button>
           </div>
         </form>
       </div>

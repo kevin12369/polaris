@@ -3,6 +3,7 @@ import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { kbApi } from '../api'
 import { fmtTime } from '../utils'
+import { t, catLabel } from '../i18n'
 
 const route = useRoute()
 
@@ -108,21 +109,21 @@ onMounted(async () => {
 <template>
   <div class="kb-page">
     <div class="toolbar">
-      <input v-model="query" class="search" placeholder="搜索知识库…（支持 BM25 全文检索）" />
+      <input v-model="query" class="search" :placeholder="t('kb.searchPlaceholder')" />
       <select v-model="filterCategory">
-        <option value="all">全部分类</option>
+        <option value="all">{{ t('tickets.allCategory') }}</option>
         <option v-for="c in categories" :key="c.category" :value="c.category">
           {{ c.category }} ({{ c.count }})
         </option>
       </select>
       <select v-model="filterSource">
-        <option value="all">全部来源</option>
-        <option value="manual">手写</option>
-        <option value="ticket">工单沉淀</option>
+        <option value="all">{{ t('kb.allSource') }}</option>
+        <option value="manual">{{ t('kb.source.manual') }}</option>
+        <option value="ticket">{{ t('kb.source.ticket') }}</option>
       </select>
       <div class="grow"></div>
-      <span class="muted total">{{ total }} 条</span>
-      <button class="btn btn-primary" @click="showCreate = true">＋ 新建条目</button>
+      <span class="muted total">{{ t('kb.count', { n: total }) }}</span>
+      <button class="btn btn-primary" @click="showCreate = true">＋ {{ t('kb.new') }}</button>
     </div>
 
     <div v-if="error" class="error-box">{{ error }}</div>
@@ -130,10 +131,10 @@ onMounted(async () => {
     <div class="kb-grid">
       <!-- 列表 -->
       <div class="kb-list card">
-        <div v-if="loading" class="empty">加载中…</div>
+        <div v-if="loading" class="empty">{{ t('common.loading') }}</div>
         <div v-else-if="!items.length" class="empty">
           <div class="empty-icon">◫</div>
-          {{ query ? '没有匹配的条目' : '知识库还是空的' }}
+          {{ query ? t('kb.noMatch') : t('kb.empty') }}
         </div>
         <div
           v-for="it in items"
@@ -145,7 +146,7 @@ onMounted(async () => {
           <div class="grow">
             <div class="kb-row-title truncate">{{ it.title }}</div>
             <div class="kb-row-meta">
-              <span class="badge badge-mute">{{ it.category }}</span>
+              <span class="badge badge-mute">{{ catLabel(it.category) }}</span>
               <span v-if="it.source === 'ticket'" class="badge badge-info" title="由工单沉淀">
                 ◫ {{ it.source_ticket_code }}
               </span>
@@ -162,24 +163,24 @@ onMounted(async () => {
       <div class="kb-detail card">
         <div v-if="!detail" class="empty">
           <div class="empty-icon">←</div>
-          从左侧选择一个条目查看详情
+          {{ t('kb.selectHint') }}
         </div>
         <template v-else>
           <div class="card-head">
             <h3 class="grow truncate">{{ detail.title }}</h3>
-            <button class="btn btn-sm" @click="markHelpful">👍 有用 {{ detail.helpful }}</button>
-            <button class="btn btn-danger btn-sm" @click="removeArticle">删除</button>
+            <button class="btn btn-sm" @click="markHelpful">👍 {{ t('kb.helpful', { n: detail.helpful }) }}</button>
+            <button class="btn btn-danger btn-sm" @click="removeArticle">{{ t('common.delete') }}</button>
           </div>
           <div class="card-body">
             <div class="row" style="gap: 6px; margin-bottom: 12px">
-              <span class="badge badge-mute">{{ detail.category }}</span>
+              <span class="badge badge-mute">{{ catLabel(detail.category) }}</span>
               <span class="badge badge-mute">{{ detail.source === 'ticket' ? '工单沉淀' : '手写' }}</span>
               <span v-for="t in detail.tags" :key="t" class="badge badge-info">{{ t }}</span>
             </div>
             <div v-if="detail.summary" class="kb-summary">{{ detail.summary }}</div>
 
             <div v-if="detail.steps?.length" class="steps">
-              <div class="steps-label">排查步骤</div>
+              <div class="steps-label">{{ t('kb.steps') }}</div>
               <ol>
                 <li v-for="(s, i) in detail.steps" :key="i">
                   <strong>{{ s.title }}</strong>
@@ -191,7 +192,7 @@ onMounted(async () => {
             <div v-if="detail.content" class="kb-content">{{ detail.content }}</div>
 
             <div class="kb-foot muted">
-              更新于 {{ fmtTime(detail.updated_at) }} · 命中 {{ detail.hits }} 次 · 浏览 {{ detail.views }} 次
+              {{ t('kb.updated', { t: fmtTime(detail.updated_at) }) }} · {{ t('kb.hits', { a: detail.hits, b: detail.views }) }}
             </div>
           </div>
         </template>
@@ -202,16 +203,16 @@ onMounted(async () => {
     <div v-if="showCreate" class="modal-mask" @click.self="showCreate = false">
       <div class="modal fade-in">
         <div class="modal-head">
-          <h3>新建知识库条目</h3>
+          <h3>{{ t('kb.form.title') }}</h3>
           <button class="btn btn-ghost btn-sm" @click="showCreate = false">✕</button>
         </div>
         <form class="modal-body" @submit.prevent="createArticle">
           <div class="field">
-            <label>标题 *</label>
-            <input v-model="form.title" required minlength="3" placeholder="例如：502 网关错误的排查路径" />
+            <label>{{ t('kb.form.titleLabel') }}</label>
+            <input v-model="form.title" required minlength="3" :placeholder="t('kb.form.titlePlaceholder')" />
           </div>
           <div class="field">
-            <label>分类</label>
+            <label>{{ t('kb.form.category') }}</label>
             <select v-model="form.category">
               <option v-for="c in ['账号登录','支付账单','接口API','数据问题','性能卡顿','部署运维','功能缺陷','咨询其他']" :key="c" :value="c">
                 {{ c }}
@@ -219,16 +220,16 @@ onMounted(async () => {
             </select>
           </div>
           <div class="field">
-            <label>摘要</label>
-            <input v-model="form.summary" placeholder="留空则自动生成" />
+            <label>{{ t('kb.form.summary') }}</label>
+            <input v-model="form.summary" placeholder="{{ t('kb.form.summaryHint') }}" />
           </div>
           <div class="field">
-            <label>标签</label>
-            <input v-model="form.tags" placeholder="逗号分隔，如：登录, 高频" />
+            <label>{{ t('kb.form.tags') }}</label>
+            <input v-model="form.tags" :placeholder="t('kb.form.tagsHint')" />
           </div>
           <div class="field">
-            <label>内容</label>
-            <textarea v-model="form.content" rows="6" placeholder="根因、现象、处理方法" />
+            <label>{{ t('kb.form.content') }}</label>
+            <textarea v-model="form.content" rows="6" :placeholder="t('kb.form.contentPlaceholder')" />
           </div>
           <div class="modal-foot">
             <button type="button" class="btn" @click="showCreate = false">取消</button>

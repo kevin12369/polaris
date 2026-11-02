@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { assistantApi } from '../api'
 import { fmtRelative } from '../utils'
+import { t } from '../i18n'
 
 const engine = ref(null)
 const input = ref('')
@@ -62,7 +63,7 @@ onMounted(() => {
       <div class="col">
         <div class="card">
           <div class="card-head">
-            <h3>输入报错</h3>
+            <h3>{{ t('ai.title') }}</h3>
             <span v-if="engine" class="badge" :class="engine.llm_enabled ? 'badge-ok' : 'badge-mute'">
               {{ engine.llm_enabled ? '大模型增强' : '本地规则引擎' }}
             </span>
@@ -71,20 +72,20 @@ onMounted(() => {
             <textarea
               v-model="input"
               rows="7"
-              placeholder="粘贴客户的报错信息、异常日志或错误描述…&#10;例如：502 Bad Gateway Error: request to /api/v2/orders timed out"
+              :placeholder="t('ai.placeholder')"
               @keyup.ctrl.enter="run()"
             ></textarea>
             <div class="row-between" style="margin-top: 10px">
-              <span class="muted tiny">Ctrl + Enter 快速执行</span>
+              <span class="muted tiny">{{ t('ai.ctrlEnter') }}</span>
               <button class="btn btn-primary" :disabled="loading" @click="run()">
-                {{ loading ? '分析中…' : '生成排查步骤' }}
+                {{ loading ? t('ai.analyzing') : t('ai.run') }}
               </button>
             </div>
           </div>
         </div>
 
         <div class="card" style="margin-top: 14px">
-          <div class="card-head"><h3>示例报错</h3></div>
+          <div class="card-head"><h3>{{ t('ai.samples') }}</h3></div>
           <div class="card-body">
             <button v-for="s in SAMPLES" :key="s" class="sample" @click="run(s)">
               {{ s }}
@@ -93,7 +94,7 @@ onMounted(() => {
         </div>
 
         <div v-if="history.length" class="card" style="margin-top: 14px">
-          <div class="card-head"><h3>最近查询</h3></div>
+          <div class="card-head"><h3>{{ t('ai.history') }}</h3></div>
           <div class="card-body">
             <button
               v-for="h in history.slice(0, 8)"
@@ -103,7 +104,7 @@ onMounted(() => {
             >
               <span class="truncate grow">{{ h.query }}</span>
               <span class="badge" :class="h.hit ? 'badge-ok' : 'badge-mute'">
-                {{ h.hit ? '命中' : '未命中' }}
+                {{ h.hit ? t('ai.historyHit') : t('ai.historyMiss') }}
               </span>
               <span class="muted tiny">{{ fmtRelative(h.created_at) }}</span>
             </button>
@@ -118,10 +119,9 @@ onMounted(() => {
         <div v-if="!result" class="card">
           <div class="empty">
             <div class="empty-icon">✦</div>
-            输入报错信息后，这里会给出可执行的排查步骤
+            {{ t('ai.emptyTitle') }}
             <div class="muted" style="margin-top: 10px; font-size: 12px; max-width: 340px; margin-left: auto; margin-right: auto">
-              优先检索你的知识库；库里没有匹配时，会按问题分类给出标准排查清单，
-              并建议把结论沉淀回知识库。
+              {{ t('ai.emptyDesc') }}
             </div>
           </div>
         </div>
@@ -129,13 +129,13 @@ onMounted(() => {
         <template v-else>
           <div class="card">
             <div class="card-head">
-              <h3>诊断结论</h3>
+              <h3>{{ t('ai.diagnosis') }}</h3>
               <div class="row" style="gap: 6px">
                 <span class="badge" :class="result.hit ? 'badge-ok' : 'badge-warn'">
-                  {{ result.hit ? '知识库命中' : '通用排查清单' }}
+                  {{ result.hit ? t('ai.badge.hit') : t('ai.badge.miss') }}
                 </span>
-                <span class="badge badge-mute">置信 {{ Math.round(result.confidence * 100) }}%</span>
-                <span class="badge badge-mute">引擎 {{ result.engine }}</span>
+                <span class="badge badge-mute">{{ t('ai.badge.conf') }} {{ Math.round(result.confidence * 100) }}%</span>
+                <span class="badge badge-mute">{{ t('ai.badge.engine') }} {{ result.engine }}</span>
               </div>
             </div>
             <div class="card-body">
@@ -144,7 +144,7 @@ onMounted(() => {
           </div>
 
           <div class="card" style="margin-top: 14px">
-            <div class="card-head"><h3>排查步骤</h3></div>
+            <div class="card-head"><h3>{{ t('ai.steps') }}</h3></div>
             <div class="card-body">
               <ol class="steps">
                 <li v-for="(s, i) in result.steps" :key="i">
@@ -160,7 +160,7 @@ onMounted(() => {
           </div>
 
           <div v-if="result.matched_articles?.length" class="card" style="margin-top: 14px">
-            <div class="card-head"><h3>引用的知识库条目</h3></div>
+            <div class="card-head"><h3>{{ t('ai.matched') }}</h3></div>
             <div class="card-body">
               <div v-for="a in result.matched_articles" :key="a.id" class="matched">
                 <div class="grow">

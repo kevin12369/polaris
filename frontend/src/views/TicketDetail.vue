@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { assistantApi, kbApi, ticketApi } from '../api'
 import { fmtMinutes, fmtRemaining, fmtTime, PRIORITY_TONE, STATUS_TONE } from '../utils'
+import { t, catLabel, statusLabel, priLabel } from '../i18n'
 
 const route = useRoute()
 const router = useRouter()
@@ -159,18 +160,18 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="loading" class="empty">加载中…</div>
-  <div v-else-if="!ticket" class="empty">工单不存在</div>
+  <div v-if="loading" class="empty">{{ t('common.loading') }}</div>
+  <div v-else-if="!ticket" class="empty">{{ t('td.notFound') }}</div>
   <div v-else class="detail">
     <div class="row-between" style="margin-bottom: 14px">
       <div class="row" style="gap: 10px">
-        <button class="btn btn-ghost btn-sm" @click="router.back()">← 返回</button>
+        <button class="btn btn-ghost btn-sm" @click="router.back()">{{ t('td.back') }}</button>
         <span class="mono muted">{{ ticket.code }}</span>
         <span class="badge" :class="`badge-${PRIORITY_TONE[ticket.priority]}`">
-          {{ ticket.priority }} · {{ ticket.priority_label }}
+          {{ ticket.priority }} · {{ priLabel(ticket.priority, ticket.priority_label) }}
         </span>
-        <span class="badge" :class="`badge-${STATUS_TONE[ticket.status]}`">{{ ticket.status_label }}</span>
-        <span class="badge badge-mute">{{ ticket.category }}</span>
+        <span class="badge" :class="`badge-${STATUS_TONE[ticket.status]}`">{{ statusLabel(ticket.status, ticket.status_label) }}</span>
+        <span class="badge badge-mute">{{ catLabel(ticket.category) }}</span>
         <span
           v-if="ticket.category_source === 'ai'"
           class="badge badge-info"

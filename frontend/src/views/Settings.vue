@@ -1,7 +1,8 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { api } from '../api'
 import { session } from '../store'
+import { t } from '../i18n'
 
 const loading = ref(false)
 const saving = ref(false)
@@ -15,15 +16,15 @@ const form = ref({
   work_end_hour: 18,
 })
 
-const DAYS = [
-  { v: 0, label: '周一' },
-  { v: 1, label: '周二' },
-  { v: 2, label: '周三' },
-  { v: 3, label: '周四' },
-  { v: 4, label: '周五' },
-  { v: 5, label: '周六' },
-  { v: 6, label: '周日' },
-]
+const DAYS = computed(() => [
+  { v: 0, label: t('day.mon') },
+  { v: 1, label: t('day.tue') },
+  { v: 2, label: t('day.wed') },
+  { v: 3, label: t('day.thu') },
+  { v: 4, label: t('day.fri') },
+  { v: 5, label: t('day.sat') },
+  { v: 6, label: t('day.sun') },
+])
 
 const isAdmin = () => session.user?.role === 'admin'
 
@@ -81,7 +82,7 @@ async function resetDefault() {
       work_end_hour: 18,
     })
     await load()
-    success.value = '已恢复默认排班（周一至周五 09:00-18:00）。'
+    success.value = t('s.restored')
   } catch (e) {
     error.value = e.message
   } finally {
@@ -96,21 +97,18 @@ onMounted(load)
   <div class="settings-page">
     <div class="card" style="max-width: 620px">
       <div class="card-head">
-        <h3>工作时间表</h3>
-        <span v-if="isDefault" class="badge badge-mute">默认</span>
-        <span v-else class="badge badge-info">自定义</span>
+        <h3>{{ t('s.schedule') }}</h3>
+        <span v-if="isDefault" class="badge badge-mute">{{ t('s.scheduleDefault') }}</span>
+        <span v-else class="badge badge-info">{{ t('s.scheduleCustom') }}</span>
       </div>
       <div class="card-body">
-        <p class="muted intro">
-          SLA 倒计时按工作时间计算。周末和晚上不计入。
-          如果你们周末也值班，把对应日期勾上即可 —— SLA 会自动按新排班计算。
-        </p>
+        <p class="muted intro">{{ t('s.scheduleIntro') }}</p>
 
         <div v-if="error" class="msg error">{{ error }}</div>
         <div v-if="success" class="msg success">{{ success }}</div>
 
         <div class="field">
-          <label>工作日</label>
+          <label>{{ t('s.workdays') }}</label>
           <div class="day-row">
             <button
               v-for="d in DAYS"
@@ -127,13 +125,13 @@ onMounted(load)
 
         <div class="two-col">
           <div class="field">
-            <label>上班时间</label>
+            <label>{{ t('s.start') }}</label>
             <select v-model.number="form.work_start_hour" :disabled="!isAdmin()">
               <option v-for="h in 24" :key="h" :value="h - 1">{{ h - 1 }}:00</option>
             </select>
           </div>
           <div class="field">
-            <label>下班时间</label>
+            <label>{{ t('s.end') }}</label>
             <select v-model.number="form.work_end_hour" :disabled="!isAdmin()">
               <option v-for="h in 24" :key="h" :value="h + 1">{{ h }}:00</option>
             </select>
@@ -141,19 +139,19 @@ onMounted(load)
         </div>
 
         <div class="preview muted">
-          每天工作时长：
-          <strong>{{ form.work_end_hour - form.work_start_hour }} 小时</strong>
-          · 每周共
-          <strong>{{ (form.work_end_hour - form.work_start_hour) * form.work_days.length }} 小时</strong>
+          {{ t('s.preview') }}
+          <strong>{{ form.work_end_hour - form.work_start_hour }} {{ t('s.hoursUnit') }}</strong>
+          {{ t('s.weekly') }}
+          <strong>{{ (form.work_end_hour - form.work_start_hour) * form.work_days.length }} {{ t('s.hoursUnit') }}</strong>
         </div>
 
         <div v-if="!isAdmin()" class="msg mute">
-          仅管理员可修改工作时间表。
+          {{ t('s.adminOnly') }}
         </div>
         <div v-else class="actions">
-          <button class="btn" :disabled="saving" @click="resetDefault">恢复默认</button>
+          <button class="btn" :disabled="saving" @click="resetDefault">{{ t('s.restoreDefault') }}</button>
           <button class="btn btn-primary" :disabled="saving" @click="save">
-            {{ saving ? '保存中…' : '保存' }}
+            {{ saving ? t('common.saving') : t('common.save') }}
           </button>
         </div>
       </div>

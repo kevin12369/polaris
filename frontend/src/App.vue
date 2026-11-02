@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { endSession, session } from './store'
+import { t, lang, setLang } from './i18n'
 
 const route = useRoute()
 const router = useRouter()
@@ -12,17 +13,21 @@ const navOpen = ref(false)
 
 const isAuthed = computed(() => !!session.token)
 
-const navItems = [
-  { name: 'dashboard', label: '仪表盘', icon: '◈', to: '/dashboard' },
-  { name: 'tickets', label: '工单', icon: '▤', to: '/tickets' },
-  { name: 'kb', label: '知识库', icon: '◫', to: '/kb' },
-  { name: 'assistant', label: 'AI 排障', icon: '✦', to: '/assistant' },
-  { name: 'settings', label: '设置', icon: '⚙', to: '/settings' },
-]
+const navItems = computed(() => [
+  { name: 'dashboard', label: t('nav.dashboard'), icon: '◈', to: '/dashboard' },
+  { name: 'tickets', label: t('nav.tickets'), icon: '▤', to: '/tickets' },
+  { name: 'kb', label: t('nav.kb'), icon: '◫', to: '/kb' },
+  { name: 'assistant', label: t('nav.assistant'), icon: '✦', to: '/assistant' },
+  { name: 'settings', label: t('nav.settings'), icon: '⚙', to: '/settings' },
+])
 
 function logout() {
   endSession()
   router.push({ name: 'login' })
+}
+
+function toggleLang() {
+  setLang(lang.value === 'zh' ? 'en' : 'zh')
 }
 </script>
 
@@ -36,8 +41,8 @@ function logout() {
       <div class="brand">
         <div class="brand-mark">✦</div>
         <div class="grow">
-          <div class="brand-name truncate">北极星 Polaris</div>
-          <div class="brand-sub truncate">{{ company?.name || '未命名企业' }}</div>
+          <div class="brand-name truncate">{{ t('brand.name') }}</div>
+          <div class="brand-sub truncate">{{ company?.name || t('common.unnamed') }}</div>
         </div>
       </div>
 
@@ -56,23 +61,26 @@ function logout() {
       </nav>
 
       <div class="sidebar-foot">
+        <button class="lang-toggle" :title="t('common.langSwitch')" @click="toggleLang">
+          {{ lang === 'zh' ? 'EN' : '中文' }}
+        </button>
         <div class="user-card">
           <div class="avatar">{{ (user?.name || '?').slice(0, 1) }}</div>
           <div class="grow">
             <div class="user-name truncate">{{ user?.name }}</div>
-            <div class="user-role">{{ user?.role === 'admin' ? '管理员' : '坐席' }}</div>
+            <div class="user-role">{{ user?.role === 'admin' ? t('nav.role.admin') : t('nav.role.agent') }}</div>
           </div>
         </div>
-        <button class="btn btn-ghost btn-sm btn-block" @click="logout">退出登录</button>
+        <button class="btn btn-ghost btn-sm btn-block" @click="logout">{{ t('nav.logout') }}</button>
       </div>
     </aside>
 
     <div class="main-area">
       <header class="topbar">
         <button class="btn btn-ghost btn-sm menu-btn" @click="navOpen = !navOpen">☰</button>
-        <div class="topbar-title">{{ route.meta.title || '北极星 Polaris' }}</div>
+        <div class="topbar-title">{{ route.meta.titleKey ? t(route.meta.titleKey) : t('brand.name') }}</div>
         <div class="grow"></div>
-        <span class="plan-pill">{{ company?.plan === 'trial' ? '试用版' : company?.plan || '试用版' }}</span>
+        <span class="plan-pill">{{ company?.plan === 'trial' ? t('nav.plan.trial') : company?.plan || t('nav.plan.trial') }}</span>
       </header>
 
       <main class="content">
@@ -168,6 +176,23 @@ function logout() {
 .sidebar-foot {
   padding: 10px;
   border-top: 1px solid var(--border);
+}
+.lang-toggle {
+  width: 100%;
+  height: 26px;
+  margin-bottom: 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev-2);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: border-color 0.14s ease, color 0.14s ease;
+}
+.lang-toggle:hover {
+  border-color: var(--accent-border);
+  color: var(--accent-hover);
 }
 .user-card {
   display: flex;
