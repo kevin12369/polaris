@@ -1,0 +1,42 @@
+name: Deploy Demo to GitHub Pages
+
+# 演示页是零依赖单文件 HTML，直接发布 demo/ 目录即可
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'demo/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 允许并发部署，取消进行中的旧任务
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: 部署演示页
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 配置 Pages
+        uses: actions/configure-pages@v5
+
+      - name: 上传演示页产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: demo
+
+      - name: 部署
+        id: deployment
+        uses: actions/deploy-pages@v4
