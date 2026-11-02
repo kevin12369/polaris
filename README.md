@@ -246,6 +246,9 @@ docker compose restart backend
 否则 `docker compose up` 会起一个空库：
 
 ```bash
+# 卷全名格式是 <项目目录名>_<卷名>，先用 docker volume ls 确认实际名字
+docker volume ls | grep -E "sw-data|polaris-data"
+
 # 1. 先备份旧卷
 docker run --rm -v support-workbench_sw-data:/old -v $(pwd):/backup alpine \
   tar czf /backup/old-sw-data.tar.gz -C /old .
@@ -258,6 +261,9 @@ docker run --rm -v support-workbench_sw-data:/old -v polaris_polaris-data:/new a
 # 3. 重启后端
 docker compose restart backend
 ```
+
+> 上面命令里的卷名假设项目目录就叫 `polaris` 和 `support-workbench`。
+> 如果你的目录名不同，按第 0 步 `docker volume ls` 的实际结果替换。
 
 如果还没部署过（首次使用），跳过这一步即可。
 
