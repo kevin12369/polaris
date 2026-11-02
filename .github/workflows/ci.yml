@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-test:
+    name: 后端测试
+    runs-on: ubuntu-latest
+    services:
+      # 端到端测试需要一个运行中的后端
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: 安装依赖
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      - name: 单元测试（SLA + 检索）
+        working-directory: backend
+        run: |
+          python tests/test_sla.py
+          python tests/test_retrieval.py
+
+      - name: 启动服务
+        working-directory: backend
+        run: |
+          nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 8100 \
+            > /tmp/uvicorn.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8100/api/health > /dev/null; then
+              echo "服务已就绪"; break
+            fi
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:8100/api/health || (cat /tmp/uvicorn.log && exit 1)
+
+      - name: 端到端测试
+        working-directory: backend
+        run: python tests/test_e2e.py
+
+  frontend-build:
+    name: 前端构建
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 安装依赖
+        working-directory: frontend
+        run: npm ci --no-audit --no-fund
+
+      - name: 构建
+        working-directory: frontend
+        run: npm run build
+
+      - name: 检查产物
+        working-directory: frontend
+        run: |
+          test -f dist/index.html || (echo "构建产物缺失" && exit 1)
+          echo "构建产物大小: $(du -sh dist | cut -f1)"
+
+  docker-build:
+    name: Docker 镜像构建
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 构建后端镜像
+        run: docker compose build backend
+
+      - name: 构建前端镜像
+        run: docker compose build frontend
+
+      - name: 验证 compose 配置
+        run: docker compose config --quiet && echo "compose 配置合法"

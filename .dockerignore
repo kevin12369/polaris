@@ -1,0 +1,6 @@
+backend/data/
+**/node_modules/
+frontend/dist/
+.playwright-cli/
+*.log
+.sw_token

@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# 数据与密钥
+backend/data/
+*.db
+*.sqlite3
+*.sqlite
+.env
+.env.*
+!.env.example
+
+# 工具产物
+.playwright-cli/
+.sw_token
+*.log
+shot.mjs
+verify_*.mjs
+serve_prod.py

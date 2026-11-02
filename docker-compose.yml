@@ -1,0 +1,45 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: sw-backend
+    restart: unless-stopped
+    environment:
+      # 生产环境务必修改
+      SECRET_KEY: ${SECRET_KEY:-please-change-this-secret-key}
+      TOKEN_TTL_HOURS: ${TOKEN_TTL_HOURS:-72}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      DATA_DIR: /app/data
+      # LLM 为可选增强，留空则使用本地规则引擎（功能完整）
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+    volumes:
+      # SQLite 数据持久化，容器重建不丢数据
+      - sw-data:/app/data
+    expose:
+      - "8000"
+    networks:
+      - sw-net
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: sw-frontend
+    restart: unless-stopped
+    ports:
+      # 左边是宿主机端口，改成你公司服务器实际要用的端口
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - sw-net
+
+volumes:
+  sw-data:
+    driver: local
+
+networks:
+  sw-net:
+    driver: bridge
