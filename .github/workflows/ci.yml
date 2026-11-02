@@ -32,6 +32,10 @@ jobs:
 
       - name: 端到端测试（启动服务后立即执行）
         working-directory: backend
+        env:
+          # 使用独立测试库，不污染任何真实数据
+          DATABASE_URL: sqlite:////tmp/sw-ci-test.db
+          DATA_DIR: /tmp/sw-ci-data
         run: |
           # 在同一 step 内启动服务并跑测试，避免后台进程在步骤切换时被清理
           python -m uvicorn app.main:app --host 127.0.0.1 --port 8100 \

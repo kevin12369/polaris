@@ -4,18 +4,30 @@
 1. 正负样本的判别能力（8 篇语料规模下的标定）
 2. **小知识库场景** —— 小公司刚开始用时知识库只有 1-5 条，
    BM25 的 IDF 值天然偏低，固定绝对阈值会误杀相关条目（真实缺陷的回归测试）
+
+测试使用独立的临时数据库，不污染演示数据，也不依赖本机残留状态
+（CI 上是全新环境，之前因缺少建表而报 "no such table: companies"）。
 """
 from __future__ import annotations
 
+import os
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.db import SessionLocal
+# 必须在导入 app.* 之前设置，config.py 在导入时读取环境变量
+_TMP_DIR = tempfile.mkdtemp(prefix="sw_retrieval_test_")
+os.environ["DATA_DIR"] = _TMP_DIR
+os.environ["DATABASE_URL"] = f"sqlite:///{(Path(_TMP_DIR) / 'test.db').as_posix()}"
+
+from app.db import SessionLocal, init_db
 from app.models import Company, KbArticle, User, utcnow
 from app.security import hash_password
 from app.services.retrieval import search
+
+init_db()
 
 PASSED = 0
 FAILED: list[str] = []

@@ -19,6 +19,7 @@ backend/data/
 .env
 .env.*
 !.env.example
+.ci-test/
 
 # 工具产物
 .playwright-cli/
