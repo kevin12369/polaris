@@ -3,6 +3,11 @@
 给中小企业的轻量级工单系统：让客户的每个问题都有记录、有回应、有沉淀。
 
 [![CI](https://github.com/kevin12369/polaris/actions/workflows/ci.yml/badge.svg)](https://github.com/kevin12369/polaris/actions/workflows/ci.yml)
+[![Demo](https://img.shields.io/badge/demo-live%20%E2%9A%91-blue)](https://kevin12369.github.io/polaris/)
+
+**在线演示 →** https://kevin12369.github.io/polaris/ （含模拟数据，无需后端）
+
+[English](README.en.md) · [部署指南](docs/部署指南.md)
 
 <p align="center">
   <img src="docs/screenshots/02-dashboard.png" width="820" alt="仪表盘">
@@ -35,6 +40,9 @@ Polaris 把这套散落的做法收拢成四件事：
 
 **十分钟能用起来。** 一条 `docker compose up` 命令，浏览器里自助开通一个
 独立空间就能开始录工单 —— 不用等实施、不用培训。
+
+**界面支持中英文。** 侧边栏底部一键切换，语言偏好记在浏览器本地。
+分类、状态、优先级等系统枚举也会跟着切换。
 
 ## 适合谁
 
