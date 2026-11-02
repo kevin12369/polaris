@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>北极星 Polaris · 客服工单管理平台（演示）</title>
+<meta name="description" content="Polaris 北极星 —— 客服工单管理平台演示页，含仪表盘、工单、知识库与 AI 排障助手。">
+<style>/* ============================================================
+   Polaris 演示页 · 样式
+   设计令牌复用主应用 frontend/src/styles.css 的 :root，
+   保证演示页与真产品看起来是同一个东西。
+   ============================================================ */
+:root{
+--bg:#0d1117;--bg-elev:#131920;--bg-elev-2:#1a212b;--bg-hover:#1e2731;--bg-input:#0f151c;
+--border:#232c38;--border-strong:#2e3947;
+--text:#e6edf3;--text-dim:#9aa7b4;--text-mute:#6b7885;
+--accent:#5b7cfa;--accent-hover:#6d8bff;--accent-dim:rgba(91,124,250,.14);--accent-border:rgba(91,124,250,.4);
+--p1:#f2555a;--p2:#f59e4b;--p3:#4aa3f0;--p4:#6b7885;--ok:#3fb950;--warn:#d29922;--danger:#f2555a;
+--radius:8px;--radius-sm:5px;
+--font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--accent-hover)}
+/* ---------- 顶栏 ---------- */
+.topbar{position:sticky;top:0;z-index:30;background:rgba(13,17,23,.88);border-bottom:1px solid var(--border)}
+.topbar-inner{max-width:1400px;margin:0 auto;padding:0 22px;height:58px;display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.brand-mark{width:30px;height:30px;display:grid;place-items:center;border-radius:8px;background:linear-gradient(135deg,var(--accent),#8b5cf6);color:#fff;font-weight:700;font-size:15px;box-shadow:0 2px 8px rgba(91,124,250,.3)}
+.brand-text{display:flex;flex-direction:column;line-height:1.25}
+.brand-name{font-size:14px;font-weight:600}
+.brand-sub{font-size:11px;color:var(--text-mute)}
+.nav{display:flex;align-items:center;gap:2px;margin-left:6px;overflow-x:auto}
+.nav::-webkit-scrollbar{display:none}
+.nav-item{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border-radius:var(--radius-sm);color:var(--text-dim);font-size:13.5px;font-weight:500;white-space:nowrap;cursor:pointer;border:1px solid transparent;background:none;font-family:inherit}
+.nav-item:hover{background:var(--bg-hover);color:var(--text)}
+.nav-item.active{background:var(--accent-dim);color:var(--accent);border-color:var(--accent-border)}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.9;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.lang-btn{height:30px;padding:0 11px;border-radius:var(--radius-sm);border:1px solid var(--border-strong);background:var(--bg-elev-2);color:var(--accent);font-family:var(--mono);font-size:12px;cursor:pointer}
+.lang-btn:hover{border-color:var(--accent-border);color:var(--text)}
+/* ---------- 页面容器 ---------- */
+.wrap{max-width:1400px;margin:0 auto;padding:22px}
+.page{display:none}
+.page.active{display:block;animation:fadeIn .22s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+.page-head h1{margin:0;font-size:19px;font-weight:600;letter-spacing:-.01em}
+.page-head .sub{color:var(--text-mute);font-size:12.5px}
+.mt{margin-top:14px}
+/* ---------- 卡片 / 按钮 / 徽章 ---------- */
+.card{background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius)}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 15px;border-bottom:1px solid var(--border)}
+.card-head h3{margin:0;font-size:13.5px;font-weight:600}
+.card-body{padding:15px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 13px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--bg-elev-2);color:var(--text);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap}
+.btn:hover:not(:disabled){background:var(--bg-hover);border-color:#3a4756}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn-sm{height:27px;padding:0 10px;font-size:12px}
+.badge{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 7px;border-radius:4px;font-size:11.5px;font-weight:500;white-space:nowrap;border:1px solid transparent}
+.badge-p1{background:rgba(242,85,90,.13);color:var(--p1);border-color:rgba(242,85,90,.3)}
+.badge-p2{background:rgba(245,158,75,.13);color:var(--p2);border-color:rgba(245,158,75,.3)}
+.badge-p3{background:rgba(74,163,240,.13);color:var(--p3);border-color:rgba(74,163,240,.3)}
+.badge-p4{background:rgba(107,120,133,.15);color:var(--p4);border-color:rgba(107,120,133,.3)}
+.badge-ok{background:rgba(63,185,80,.13);color:var(--ok);border-color:rgba(63,185,80,.3)}
+.badge-warn{background:rgba(210,153,34,.13);color:var(--warn);border-color:rgba(210,153,34,.3)}
+.badge-info{background:var(--accent-dim);color:var(--accent);border-color:var(--accent-border)}
+.badge-mute{background:var(--bg-elev-2);color:var(--text-mute);border-color:var(--border)}
+.row{display:flex;align-items:center;gap:8px}
+.gap6{gap:6px}.gap7{gap:7px}.gap8{gap:8px}.wrap{flex-wrap:wrap}
+.mb12{margin-bottom:12px}.mt3{margin-top:3px}.sm{font-size:12px}.full{grid-column:1/-1}
+.row-between{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.grow{flex:1;min-width:0}
+.muted{color:var(--text-mute)}
+.dim{color:var(--text-dim)}
+.mono{font-family:var(--mono);font-size:12px}
+.tiny{font-size:11.5px}
+.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.legend{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text-dim)}
+.legend i{width:7px;height:7px;border-radius:50%;display:inline-block}
+/* ---------- 仪表盘 ---------- */
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.metric{padding:14px 16px}
+.metric-label{font-size:11.5px;color:var(--text-mute);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.metric-value{margin:7px 0 4px;font-size:27px;font-weight:600;letter-spacing:-.02em;line-height:1.1}
+.metric-unit{margin-left:3px;font-size:13px;font-weight:500;color:var(--text-mute)}
+.metric-sub{font-size:11.5px}
+.tone-accent{color:var(--accent)}.tone-ok{color:var(--ok)}.tone-danger{color:var(--danger)}
+.trend-chart{width:100%;height:auto;display:block}
+.dist-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.bar-row{display:flex;align-items:center;gap:10px;padding:6px 0}
+.bar-label{width:92px;flex-shrink:0;font-size:12.5px;color:var(--text-dim)}
+.bar-track{flex:1;height:6px;border-radius:3px;background:var(--bg-elev-2);overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .4s ease}
+.bar-fill.alt{background:#8b5cf6}
+.bar-val{width:26px;text-align:right;font-size:12px;color:var(--text-dim);font-family:var(--mono)}
+/* ---------- 工单 ---------- */
+.table-wrap{overflow-x:auto}
+table.data{width:100%;border-collapse:collapse;min-width:880px}
+table.data th{padding:9px 12px;text-align:left;font-size:11.5px;font-weight:600;color:var(--text-mute);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);white-space:nowrap}
+table.data td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+table.data tbody tr.tk-row{cursor:pointer;transition:background .12s}
+table.data tbody tr.tk-row:hover{background:var(--bg-elev-2)}
+table.data tbody tr.tk-row.sel{background:var(--accent-dim)}
+table.data tbody tr.tk-row.sel td:first-child{box-shadow:inset 2px 0 0 var(--accent)}
+.requester{font-size:11.5px;margin-top:2px;color:var(--text-mute)}
+.overdue{color:var(--danger);font-weight:600}
+.soon{color:var(--warn)}
+.detail-row td{background:var(--bg);padding:0}
+.detail-wrap{display:grid;grid-template-columns:250px 210px minmax(0,1fr);gap:14px;padding:15px}
+.detail-sec{border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-elev);padding:11px 12px}
+.detail-sec h4{margin:0 0 9px;font-size:11.5px;font-weight:600;color:var(--text-mute);text-transform:uppercase;letter-spacing:.06em}
+.sla-item{padding-bottom:9px;margin-bottom:9px;border-bottom:1px solid var(--border)}
+.sla-item:last-of-type{border-bottom:none;margin-bottom:0}
+.sla-value{margin:5px 0 2px;font-size:16px;font-weight:600;font-family:var(--mono)}
+.st-ok{color:var(--ok)}.st-warn{color:var(--warn)}.st-danger{color:var(--danger)}
+.sla-meta{font-size:11px;color:var(--text-mute);line-height:1.55}
+.flow-note{width:100%;padding:7px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:inherit;font-size:13px;outline:none;resize:vertical;min-height:56px;line-height:1.6}
+.flow-note:focus{border-color:var(--accent-border);box-shadow:0 0 0 3px var(--accent-dim)}
+.flow-note::placeholder,.ai-input::placeholder{color:var(--text-mute)}
+.flow-btns{display:flex;flex-direction:column;gap:6px;margin-top:9px}
+.event{display:flex;gap:11px;padding:8px 0;border-bottom:1px solid var(--border)}
+.event:last-child{border-bottom:none}
+.event-dot{width:7px;height:7px;flex-shrink:0;margin-top:6px;border-radius:50%;background:var(--text-mute)}
+.ev-created{background:var(--accent)}.ev-status{background:var(--ok)}.ev-kb{background:#a371f7}.ev-comment{background:var(--warn)}
+.actor{font-size:12.5px}
+.event-note{margin-top:3px;font-size:12.5px;color:var(--text-dim);line-height:1.55}
+/* ---------- 知识库 ---------- */
+.kb-grid{display:grid;grid-template-columns:350px minmax(0,1fr);gap:14px;align-items:start}
+.kb-list{overflow-y:auto;max-height:calc(100vh - 160px)}
+.kb-row{padding:11px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
+.kb-row:last-child{border-bottom:none}
+.kb-row:hover{background:var(--bg-elev-2)}
+.kb-row.active{background:var(--accent-dim)}
+.kb-row-title{font-size:13px;font-weight:500;line-height:1.45}
+.kb-row-meta{display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap}
+.kb-row-sum{margin-top:4px;font-size:11.5px;color:var(--text-mute);line-height:1.5}
+.kb-summary{padding:10px 12px;margin-bottom:13px;border-radius:var(--radius-sm);background:var(--bg-elev-2);border-left:2px solid var(--accent);font-size:12.5px;color:var(--text-dim);line-height:1.65}
+.kb-steps-box summary{cursor:pointer;font-size:11.5px;font-weight:600;color:var(--text-mute);text-transform:uppercase;letter-spacing:.06em;list-style:none;padding:5px 0}
+.kb-steps-box summary::-webkit-details-marker{display:none}
+.kb-steps-box summary::before{content:"▸";display:inline-block;margin-right:6px;color:var(--accent)}
+.kb-steps-box[open] summary::before{content:"▾"}
+.kb-steps{margin:8px 0 0;padding-left:20px;font-size:13px}
+.kb-steps li{margin-bottom:9px;line-height:1.6}
+.kb-steps li::marker{color:var(--accent);font-weight:600}
+.kb-content{margin-top:13px;padding-top:13px;border-top:1px solid var(--border);white-space:pre-wrap;font-size:13px;line-height:1.7;color:var(--text-dim)}
+/* ---------- AI 排障 ---------- */
+.ai-grid{display:grid;grid-template-columns:390px minmax(0,1fr);gap:14px;align-items:start}
+.ai-input{width:100%;padding:9px 11px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--mono);font-size:12px;line-height:1.65;outline:none;resize:vertical;min-height:130px}
+.ai-input:focus{border-color:var(--accent-border);box-shadow:0 0 0 3px var(--accent-dim)}
+.sample{display:block;width:100%;text-align:left;padding:8px 10px;margin-bottom:6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-elev-2);color:var(--text-dim);font-family:var(--mono);font-size:11.5px;line-height:1.5;cursor:pointer}
+.sample:hover{border-color:var(--accent-border);color:var(--text);background:var(--bg-hover)}
+.summary{font-size:13.5px;line-height:1.75}
+.aisteps{margin:0;padding:0;list-style:none}
+.aisteps li{padding:11px 0;border-bottom:1px solid var(--border)}
+.aisteps li:last-child{border-bottom:none}
+.step-title{display:flex;align-items:center;gap:9px;font-size:13.5px}
+.step-no{width:20px;height:20px;flex-shrink:0;display:grid;place-items:center;border-radius:50%;background:var(--accent-dim);border:1px solid var(--accent-border);color:var(--accent);font-size:11px;font-weight:600}
+.step-detail{margin-top:5px;padding-left:29px;font-size:13px;line-height:1.7;color:var(--text-dim)}
+.step-src{margin-top:4px;padding-left:29px;font-size:11.5px;color:var(--text-mute)}
+.matched{padding:10px 0;border-bottom:1px solid var(--border)}
+.matched:last-child{border-bottom:none}
+.matched-title{font-size:13px;font-weight:500}
+.terms{margin-top:4px;font-size:11.5px;color:var(--text-mute)}
+.terms code{font-family:var(--mono);color:var(--text-dim);background:var(--bg-elev-2);padding:1px 5px;border-radius:3px;margin-right:4px;display:inline-block}
+.stack{display:flex;flex-direction:column;gap:14px}
+/* ---------- 页脚 ---------- */
+.footer{border-top:1px solid var(--border);margin-top:26px}
+.footer-inner{max-width:1400px;margin:0 auto;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--text-mute)}
+.footer a{font-family:var(--mono);font-size:11.5px}
+/* ---------- 响应式 ---------- */
+@media (max-width:1180px){.metric-grid{grid-template-columns:repeat(2,1fr)}.ai-grid{grid-template-columns:1fr}.detail-wrap{grid-template-columns:1fr 1fr}}
+@media (max-width:980px){.kb-grid{grid-template-columns:1fr}.kb-list{max-height:340px}.dist-grid{grid-template-columns:1fr}}
+@media (max-width:760px){.topbar-inner{height:auto;padding:10px 14px;flex-wrap:wrap;gap:10px}
+.brand{order:1}.topbar-right{order:2}.nav{order:3;width:100%;margin-left:0}.nav-item{flex:0 0 auto}
+.wrap{padding:14px}.metric-grid{grid-template-columns:1fr}.detail-wrap{grid-template-columns:1fr}
+.page-head h1{font-size:17px}.footer-inner{flex-direction:column;align-items:flex-start;gap:6px}}
+</style>
+</head>
+<body>
+<!-- ============================ 顶栏 ============================ -->
+<header class="topbar">
+<div class="topbar-inner">
+<div class="brand">
+<div class="brand-mark">✦</div>
+<div class="brand-text">
+<div class="brand-name" data-i18n="brand.name"></div>
+<div class="brand-sub" data-i18n="brand.sub"></div>
+</div></div>
+<nav class="nav" id="nav">
+<button class="nav-item active" data-page="dashboard"><svg viewBox="0 0 16 16"><path d="M2 9.2 8 2.5l6 6.7M3.6 8v5.2h8.8V8"/></svg><span data-i18n="nav.dashboard"></span></button>
+<button class="nav-item" data-page="tickets"><svg viewBox="0 0 16 16"><rect x="2.2" y="2.2" width="11.6" height="11.6" rx="2"/><path d="M2.2 5.8h11.6M5.8 5.8v8"/></svg><span data-i18n="nav.tickets"></span></button>
+<button class="nav-item" data-page="kb"><svg viewBox="0 0 16 16"><path d="M3 2.6h4.6v11H3zM13 2.6H8.4v11H13z"/></svg><span data-i18n="nav.kb"></span></button>
+<button class="nav-item" data-page="assistant"><svg viewBox="0 0 16 16"><path d="M8 1.8 9.4 5.9 13.6 7.3 9.4 8.7 8 12.8 6.6 8.7 2.4 7.3 6.6 5.9z"/></svg><span data-i18n="nav.assistant"></span></button>
+</nav>
+<div class="topbar-right">
+<button class="lang-btn" id="langBtn" title="中 / EN"><span id="langLabel">EN</span></button>
+</div></div></header>
+
+<main class="wrap">
+<!-- ============================ 仪表盘 ============================ -->
+<section class="page active" id="page-dashboard">
+<div class="page-head">
+<div><h1 data-i18n="dash.title"></h1><div class="sub" data-i18n="dash.range"></div></div>
+</div>
+<div class="metric-grid" id="metricGrid"></div>
+<div class="card mt">
+<div class="card-head"><h3 data-i18n="chart.title"></h3>
+<div class="row" style="gap:12px">
+<span class="legend"><i style="background:var(--accent)"></i><span data-i18n="chart.created"></span></span>
+<span class="legend"><i style="background:var(--ok)"></i><span data-i18n="chart.resolved"></span></span></div></div>
+<div class="card-body">
+<svg id="trendChart" class="trend-chart" viewBox="0 0 760 210" role="img" aria-label="ticket trend"></svg>
+<div class="row-between tiny muted" style="margin-top:6px">
+<span data-i18n="chart.note"></span></div></div></div>
+<div class="dist-grid">
+<div class="card"><div class="card-head"><h3 data-i18n="chart.cat"></h3></div><div class="card-body" id="catBars"></div></div>
+<div class="card"><div class="card-head"><h3 data-i18n="chart.status"></h3></div><div class="card-body" id="statusBars"></div></div>
+</div></section>
+
+<!-- ============================ 工单 ============================ -->
+<section class="page" id="page-tickets">
+<div class="page-head">
+<div><h1 data-i18n="t.title"></h1></div>
+<div class="row" style="gap:8px">
+</div></div>
+<div class="card"><div class="table-wrap"><table class="data">
+<thead><tr>
+<th style="width:88px" data-i18n="t.th.code"></th>
+<th data-i18n="t.th.title"></th>
+<th style="width:92px" data-i18n="t.th.pri"></th>
+<th style="width:104px" data-i18n="t.th.cat"></th>
+<th style="width:96px" data-i18n="t.th.status"></th>
+<th style="width:134px" data-i18n="t.th.sla"></th>
+<th style="width:62px" data-i18n="t.th.kb"></th>
+</tr></thead><tbody id="ticketBody"></tbody></table></div></div></section>
+
+<!-- ============================ 知识库 ============================ -->
+<section class="page" id="page-kb">
+<div class="page-head">
+<div><h1 data-i18n="kb.title"></h1><div class="sub" id="kbSub"></div></div>
+<span class="badge badge-info" data-i18n="kb.bm25"></span></div>
+<div class="kb-grid">
+<div class="kb-list card" id="kbList"></div>
+<div class="kb-detail card" id="kbDetail"></div></div></section>
+
+<!-- ============================ AI 排障 ============================ -->
+<section class="page" id="page-assistant">
+<div class="page-head">
+<div><h1 data-i18n="ai.title"></h1><div class="sub" data-i18n="ai.sub"></div></div>
+<span class="badge badge-mute" data-i18n="ai.localEngine"></span></div>
+<div class="ai-grid">
+<div class="stack">
+<div class="card"><div class="card-head"><h3 data-i18n="ai.input"></h3></div>
+<div class="card-body">
+<textarea id="aiText" class="ai-input" spellcheck="false"></textarea>
+<div class="row-between" style="margin-top:10px">
+<span class="tiny muted" data-i18n="ai.hint"></span>
+<button class="btn btn-primary" id="aiRun" data-i18n="ai.run"></button></div></div></div>
+<div class="card"><div class="card-head"><h3 data-i18n="ai.samples"></h3></div>
+<div class="card-body" id="aiSamples"></div></div></div>
+<div class="stack" id="aiOut"></div></div></section>
+</main>
+
+<!-- ============================ 页脚 ============================ -->
+<footer class="footer"><div class="footer-inner">
+<span data-i18n="footer.note"></span>
+<span><span data-i18n="footer.repo"></span>: <a href="https://github.com/kevin12369/polaris" rel="noopener">https://github.com/kevin12369/polaris</a></span>
+</div></footer>
+
+<script>
+/* ============================================================
+   1. 语言字典 —— 界面文案的唯一来源
+   每条写作「中文|English」，L() 按当前语言取半边
+   ============================================================ */
+var DICT={
+'brand.name':'北极星 Polaris|Polaris',
+'brand.sub':'客服工单管理平台|Customer Ticket Management Platform',
+'nav.dashboard':'仪表盘|Dashboard','nav.tickets':'工单|Tickets','nav.kb':'知识库|Knowledge Base',
+'nav.assistant':'AI 排障|AI Assistant','dash.title':'服务概览|Service overview','dash.range':'近 30 天|Last 30 days','m.total':'工单量|Ticket volume','m.total.sub':'待处理 5 · 已解决 9|5 open · 9 resolved',
+'m.resp':'平均响应时长|Avg. first response','m.resp.sub':'13 单已响应 · 12 单达标|13 answered · 12 within SLA',
+'m.timeout':'超时率|SLA breach rate','m.timeout.sub':'SLA 超时 2 单（响应 1 · 解决 2）|2 breached (1 response · 2 resolution)',
+'m.kb':'知识库命中率|KB hit rate','m.kb.sub':'11 单已关联 · 共 8 条|11 linked · 8 articles',
+'unit.min':'分钟|min','unit.count':'单|tickets','unit.pct':'%|%',
+'chart.title':'工单趋势|Ticket trend','chart.created':'新建|Created','chart.resolved':'解决|Resolved',
+'chart.note':'10-03 ~ 11-02 · 接入 Polaris 起累计 14 单|Oct 3 – Nov 2 · 14 tickets since Polaris went live',
+'chart.cat':'分类分布|By category','chart.status':'状态分布|By status',
+'t.title':'工单|Tickets',
+'t.th.code':'编号|ID','t.th.title':'标题|Title','t.th.pri':'优先级|Priority','t.th.cat':'分类|Category',
+'t.th.status':'状态|Status','t.th.sla':'SLA 倒计时|SLA countdown','t.th.kb':'知识库|KB',
+'t.sla.title':'SLA 倒计时|SLA countdown','t.sla.resp':'首次响应|First response','t.sla.resolve':'解决时限|Resolution',
+'t.sla.target':'目标|Target','t.sla.answered':'已响应|Answered','t.sla.done':'已完成|Completed',
+'t.flow.title':'状态流转|Move ticket','t.flow.note':'备注（记入处理记录）|Note (added to the timeline)',
+'t.flow.add':'仅添加备注|Add note only','t.flow.to':'转到|Move to',
+'t.timeline.title':'处理记录|Timeline','t.created':'创建|Created',
+'t.statusChanged':'状态流转|Status change',
+'kb.title':'知识库|Knowledge base','kb.sub':'8 条 · 关单时一键沉淀，同类问题直接复用|8 articles · promote resolved tickets to answer the next one instantly',
+'kb.bm25':'BM25 全文检索|BM25 full-text search','kb.steps':'排查步骤|Troubleshooting steps',
+'kb.src.manual':'手写|Manual','kb.src.ticket':'工单沉淀|From ticket',
+'ai.title':'AI 排障助手|AI troubleshooting assistant','ai.sub':'输入报错 → 检索知识库 → 输出可执行排查步骤|Error message → knowledge base search → actionable steps',
+'ai.localEngine':'本地规则引擎|Local rule engine','ai.input':'输入报错|Describe the error',
+'ai.run':'生成排查步骤|Generate steps','ai.running':'分析中…|Analysing…','ai.samples':'示例报错|Sample errors',
+'ai.hint':'Ctrl + Enter 快速执行|Ctrl + Enter to run',
+'ai.result':'诊断结论|Diagnosis','ai.steps':'排查步骤|Troubleshooting steps','ai.matched':'引用的知识库条目|Referenced knowledge base articles',
+'ai.badge.hit':'知识库命中|KB hit','ai.badge.miss':'通用排查清单|Generic checklist',
+'ai.badge.conf':'置信|Confidence','ai.badge.engine':'引擎|Engine',
+'ai.src':'来源|Source','ai.rel':'相关度|Relevance','ai.terms':'命中词|Matched terms',
+'ai.nomatch':'未命中任何知识库条目|No knowledge base article matched',
+'footer.note':'Polaris 演示站 · 所有数据均为模拟数据，不连接真实后端|Polaris demo site · all data is simulated, no backend is contacted',
+'footer.repo':'仓库|Repository'
+};
+
+/* ============================================================
+   2. 静态字典：分类 / 状态 / 优先级 / 状态机 / SLA 策略
+   与后端 backend/app/config.py 保持一致
+   ============================================================ */
+var CATEGORIES={'账号登录':'账号登录|Account & login','支付账单':'支付账单|Billing & payments',
+'接口API':'接口 API|API & integration','数据问题':'数据问题|Data issues','性能卡顿':'性能卡顿|Performance',
+'部署运维':'部署运维|Deployment & ops','功能缺陷':'功能缺陷|Product defect','咨询其他':'咨询其他|General enquiry'};
+var STATUSES={new:['待受理|New','info'],triaged:['已分类|Triaged','info'],in_progress:['处理中|In progress','warn'],
+pending:['待客户|Awaiting customer','mute'],resolved:['已解决|Resolved','ok'],closed:['已关闭|Closed','mute']};
+var PRIORITIES={'P1':'致命中断|Critical','P2':'严重|High','P3':'一般|Normal','P4':'低|Low'};
+var TRANSITIONS={new:['triaged','in_progress','pending','resolved','closed'],
+triaged:['in_progress','pending','resolved','closed'],in_progress:['pending','resolved','closed'],
+pending:['in_progress','resolved','closed'],resolved:['closed','in_progress'],closed:['in_progress']};
+/* SLA 策略：工作分钟（周一至周五 09:00-18:00） */
+var SLA_POLICY={'P1':[30,240],'P2':[120,960],'P3':[480,2880],'P4':[1440,6720]};
+
+/* ============================================================
+   3. 模拟数据：工单
+   时间基准 2026-11-02 16:30（周一），SLA 剩余量按工作时间表推算。
+   ============================================================ */
+var TICKETS=[
+{code:'TK-0001',pri:'P1',cat:'账号登录',status:'in_progress',created:'2026-11-02 10:30',
+resp:45,respBreach:true,remain:-120,kb:true,kbId:'kb1',
+title:'所有用户登录时提示「账号或密码错误」，昨天还正常|Every user sees "Invalid username or password" at sign-in',
+note:'隐私窗口已复现；排查连接池。|Reproduced; checking the auth pool.'},
+{code:'TK-0002',pri:'P1',cat:'支付账单',status:'in_progress',created:'2026-11-02 11:55',
+resp:15,respBreach:false,remain:-35,kb:true,kbId:'kb6',
+title:'线上支付回调大面积失败，客户已扣款但订单未更新|Payment callbacks failing in bulk — customers charged, orders pending',
+note:'失败率约 55%，已升级至网关团队。|Failure rate 55%; escalated to the gateway.'},
+{code:'TK-0003',pri:'P2',cat:'数据问题',status:'pending',created:'2026-10-30 12:42',
+resp:48,respBreach:false,remain:192,kb:true,kbId:'kb3',
+title:'导出订单报表得到 0 行，但页面明明有 1000 多条|Order export returns 0 rows although the page shows 1,200+',
+note:'定位为区间参数残留，已提示客户重置。|A stale date-range parameter; asked to reset it.'},
+{code:'TK-0004',pri:'P2',cat:'性能卡顿',status:'in_progress',created:'2026-10-30 16:25',
+resp:40,respBreach:false,remain:65,kb:false,
+title:'导出报表超时，用户等 5 分钟还没出结果|Report export times out — users wait over 5 minutes',
+note:'导出任务堆积在 worker-2，等待扩容。|Export jobs are piling up on worker-2; waiting for more capacity.'},
+{code:'TK-0005',pri:'P1',cat:'接口API',status:'resolved',created:'2026-10-05 10:00',
+resp:8,respBreach:false,remain:null,kb:true,kbId:'kb2',
+title:'调用订单查询接口返回 502 Bad Gateway|Order query API returns 502 Bad Gateway',
+note:'上游节点假死导致 502。摘除异常节点，read timeout 由 5s 调至 15s。|A hung upstream node caused the 502s. Removed it and raised the read timeout to 15s.'},
+{code:'TK-0006',pri:'P1',cat:'支付账单',status:'resolved',created:'2026-10-08 09:40',
+resp:18,respBreach:false,remain:null,kb:true,kbId:'kb6',
+title:'支付成功但订单状态一直显示待支付|Payment succeeded but the order still shows as unpaid',
+note:'回调地址被防火墙拦截，对账后手工补单 37 笔并申请白名单。|The callback URL was blocked by the firewall; settled 37 orders manually and requested an allow-list.'},
+{code:'TK-0007',pri:'P2',cat:'性能卡顿',status:'resolved',created:'2026-10-19 09:30',
+resp:118,respBreach:false,remain:null,kb:true,kbId:'kb4',
+title:'后台首页加载特别慢，要 15 秒以上|Admin dashboard takes more than 15 seconds to load',
+note:'客户列表接口缺 status 索引，补索引后 P95 由 14s 降到 480ms。|A missing index on status; after adding it P95 dropped from 14s to 480ms.'},
+{code:'TK-0008',pri:'P1',cat:'部署运维',status:'closed',created:'2026-10-21 09:20',
+resp:14,respBreach:false,remain:null,kb:true,kbId:'kb5',
+title:'部署新版本后容器一直重启，服务起不来|Container restarts in a loop after the release — the service will not start',
+note:'应用启动早于数据库就绪。给 db 加 healthcheck，应用加 depends_on: service_healthy。|The app started before the database was ready. Added a healthcheck and depends_on: service_healthy.'},
+{code:'TK-0009',pri:'P3',cat:'功能缺陷',status:'closed',created:'2026-10-23 10:10',
+resp:106,respBreach:false,remain:null,kb:true,kbId:'kb7',
+title:'保存客户资料后刷新页面，内容又变回原来的|Saved contact details revert after refreshing the page',
+note:'抓包发现 phone 字段被裁剪为空值，是回归缺陷。|Packet capture showed the phone field stripped to empty.'},
+{code:'TK-0010',pri:'P3',cat:'支付账单',status:'closed',created:'2026-10-26 11:20',
+resp:24,respBreach:false,remain:null,kb:true,kbId:'kb8',
+title:'发票抬头和营业执照对不上，开发票报错|Invoice header does not match the business licence',
+note:'资质快照未更新，指导客户重提执照。|The snapshot was stale; asked to resubmit the licence.'},
+{code:'TK-0011',pri:'P4',cat:'咨询其他',status:'closed',created:'2026-10-12 13:40',
+resp:89,respBreach:false,remain:null,kb:false,
+title:'想咨询一下标准版和专业版的功能差异|What are the differences between the Standard and Pro plans?',
+note:'已发送两版对比文档。|Sent over the comparison sheet.'},
+{code:'TK-0012',pri:'P2',cat:'数据问题',status:'resolved',created:'2026-10-19 10:15',
+resp:42,respBreach:false,remain:null,kb:true,kbId:'kb3',
+title:'订单导出偶发 0 行，昨天又出现一次|Order export intermittently returns 0 rows — it happened again',
+note:'异步导出读了提交时刻的筛选快照，修复失效时机。|The async job read a cached filter snapshot; fixed the timing.'},
+{code:'TK-0013',pri:'P2',cat:'账号登录',status:'resolved',created:'2026-10-26 10:30',
+resp:36,respBreach:false,remain:null,kb:true,kbId:'kb1',
+title:'用户登录偶尔提示密码错误，输入的密码确认是对的|Login occasionally rejects a correct password',
+note:'多节点密码策略不一致，部分节点仍用旧哈希算法，统一后恢复。|Password policy differed across nodes; unified it and sign-in recovered.'},
+{code:'TK-0014',pri:'P3',cat:'功能缺陷',status:'new',created:'2026-11-01 13:10',
+resp:null,respAt:null,respBreach:false,respRemain:30,remain:2430,kb:false,
+title:'客户列表按角色筛选后分页错乱，第二页出现重复数据|Pagination breaks when filtering by role — page 2 repeats rows',
+note:'已复现：筛选后第 2 页重复，offset 未计条件。|Reproduced: page 2 repeats rows; offset ignores it.'}
+];
+
+/* 4. 模拟数据：知识库条目（t=步骤标题 d=步骤说明） */
+var KB=[
+{id:'kb1',cat:'账号登录',src:'manual',
+title:'登录失败：提示「账号或密码错误」但密码确认无误|Sign-in fails with "Invalid username or password" on correct credentials',
+summary:'多因账号锁定或缓存导致，先查锁定状态与日志。|Usually a locked account or a cached password — check the lock state.',
+content:'根因有三类：账号被锁定、客户端缓存旧密码、认证连接池耗尽。|Three causes: a locked account, a cached password or an exhausted auth pool.',
+steps:[
+{t:'查询账号锁定状态|Check the lock status',d:'用户详情页查看 status 字段，locked=true 则解锁并重置计数。|Check the user status field; unlock and reset the counter.'},
+{t:'清除客户端缓存|Clear the client cache',d:'让用户在隐私窗口重新登录，排除旧 Cookie 缓存。|Have them sign in from a private window to rule out stale cookies.'},
+{t:'检查认证服务日志|Inspect the auth logs',d:'按用户名检索 auth 日志，确认是否有连接池或鉴权异常。|Search the auth log by user name for pool or auth errors.'}]},
+{id:'kb2',cat:'接口API',src:'manual',
+title:'接口调用返回 502 Bad Gateway|API calls return 502 Bad Gateway',
+summary:'网关到上游链路中断，查上游健康与超时配置。|The link to the upstream broke; check upstream health and timeouts.',
+content:'502 表示网关拿不到上游的有效响应。常见原因：上游假死、连接池耗尽、超时过短、节点摘除。|A 502 means no usable response: hung upstream, exhausted pool or tight timeout.',
+steps:[
+{t:'确认上游健康状态|Confirm the upstream is healthy',d:'直接 curl 上游健康检查接口，判断是服务挂了还是网关配置问题。|Curl the upstream health check: dead service or bad config?'},
+{t:'检查连接池与超时|Check the pool and timeouts',d:'查看连接池占用与 read timeout 配置，必要时上调。|Inspect pool usage and the read timeout; raise it if needed.'},
+{t:'查看负载均衡节点|Inspect the load balancer nodes',d:'确认是否有节点被摘除或正在重启，必要时摘除。|Check for removed or restarting nodes; pull the bad one.'}]},
+{id:'kb3',cat:'数据问题',src:'manual',
+title:'订单数据导出为空，页面有数据但导出文件是 0 行|Order export is empty while the list shows records',
+summary:'导出任务异步执行且时间窗口有误，查询区间落在数据外。|The async export job queries the wrong window and returns nothing.',
+content:'导出走异步队列，区间默认取「当月 1 日至当前」。筛选器残留上次的区间就会导出 0 行。|Exports run through an async queue, defaulting to "1st of the month to now". A leftover range exports nothing.',
+steps:[
+{t:'复现导出条件|Reproduce the conditions',d:'在相同筛选条件下查看页面记录数，确认与导出参数是否一致。|Compare the on-screen record count with the export parameters.'},
+{t:'检查时间区间参数|Inspect the date range',d:'打开 Network 面板，查看导出请求的 start/end 参数。|Open the network panel and check the start/end parameters.'},
+{t:'重置筛选后重试|Reset the filters and retry',d:'清空自定义时间区间，点击重置后重新导出。|Clear the custom date range, hit reset and export again.'}]},
+{id:'kb4',cat:'性能卡顿',src:'manual',
+title:'系统响应变慢，页面加载超过 10 秒|System is slow — pages take more than 10 seconds',
+summary:'先定位瓶颈层：慢查询、CPU 还是依赖超时。|Locate the bottleneck first: slow query, CPU or a timing-out dependency.',
+content:'按「前端→接口→服务→数据库→依赖」逐层排除。常见根因是慢查询缺索引与外部调用同步阻塞。|Work through front end → API → service → database → dependency. Usual causes: missing index, blocking call.',
+steps:[
+{t:'采集基线|Collect a baseline',d:'记录 P95 延迟、CPU/内存/IO、数据库连接数，定位瓶颈层。|Record P95 latency, CPU/memory/IO and connections to find the layer.'},
+{t:'查慢查询日志|Read the slow query log',d:'找出耗时最长的 SQL，检查索引命中与执行计划，再排查第三方接口同步阻塞。|Find the slowest SQL and check index usage, then look for blocking third-party calls.'}]},
+{id:'kb5',cat:'部署运维',src:'manual',
+title:'部署后服务无法访问：容器反复重启|Service unreachable after deploy: the container keeps restarting',
+summary:'多为配置缺失或密钥未注入导致启动即崩，看日志首屏。|Almost always a missing config or secret that crashes the process on boot.',
+content:'容器反复重启几乎都在启动阶段：环境变量缺失、数据库连不上、端口占用、证书路径错误。|A crash loop happens at start-up: missing env vars, unreachable database, busy port, bad certificate.',
+steps:[
+{t:'看容器日志首屏|Read the container log',d:'执行 docker logs <容器> --tail 50，定位第一处异常堆栈。|Run docker logs <container> --tail 50 and find the first trace.'},
+{t:'核对配置与密钥|Check config and secrets',d:'检查环境变量、密钥挂载路径与数据库连接串。|Verify env vars, secret mount paths and the connection string.'},
+{t:'确认依赖就绪|Check the dependencies',d:'确认数据库等依赖容器已 healthy，应用再启动。|Make sure dependencies report healthy before the app starts.'}]},
+{id:'kb6',cat:'支付账单',src:'manual',
+title:'支付成功但订单状态仍为「待支付」|Payment succeeded but the order stays in "Pending payment"',
+summary:'支付回调延迟或丢失，用对账文件确认后补单。|The callback is delayed or lost — confirm with the reconciliation file, then settle.',
+content:'订单状态依赖第三方支付回调。回调丢失或延迟时订单停留在「待支付」，但实际已扣款。|Order status depends on a third-party callback. When lost the order stays pending though paid.',
+steps:[
+{t:'核对支付流水|Check the payment record',d:'用订单号在第三方支付后台查流水，确认是否已扣款。|Look the order up in the provider console and confirm the charge.'},
+{t:'等待回调重试并补单|Retry, then settle manually',d:'支付平台通常会重试回调，可等待 5-10 分钟；仍未更新就走「支付对账 - 手工补单」。|Providers retry the callback — wait 5-10 minutes, then settle via Billing → Reconciliation.'}]},
+{id:'kb7',cat:'功能缺陷',src:'ticket',srcCode:'TK-0009',
+title:'功能异常：点击「保存」后数据未更新|Clicking "Save" does not update the data',
+summary:'先看是否命中表单校验的静默拦截，再看接口返回。|Rule out a silent validation block first, then read the response.',
+content:'「点了没反应」多数是前端校验拦截，或接口返回业务错误但界面未呈现。|"Nothing happens" is usually a silent validation block or an unrendered error.',
+steps:[
+{t:'检查字段校验|Check the validation',d:'确认必填项是否填满，注意红字与必填星号提示。|Confirm the required fields are filled; look for the red hint.'},
+{t:'抓包并核对提交值|Capture and check the payload',d:'F12 Network 找到保存请求，看状态码与响应体错误；再检查请求体字段是否被裁剪。|Find the save request in F12 → Network, read status and body, check the payload.'}]},
+{id:'kb8',cat:'支付账单',src:'ticket',srcCode:'TK-0010',
+title:'发票抬头与营业执照不一致，无法开票|Invoice header does not match the business licence',
+summary:'开票信息取自认证时的资质快照，需在企业设置更新。|Billing details come from the onboarding snapshot; update them in company settings.',
+content:'开票信息来自认证时提交的资质快照。更名或变更税号后需在「企业设置-开票信息」重新提交。|Invoice details come from the onboarding snapshot. After a name or tax-id change, resubmit them.',
+steps:[
+{t:'核对当前开票信息|Check the invoice details',d:'在企业设置-开票信息中查看抬头、税号、地址电话。|Review header, tax id, address and phone under Company settings.'},
+{t:'提交变更申请|Submit the change',d:'上传最新营业执照并等待审核（1 个工作日内），说明补开流程。|Upload the current licence, wait for review and explain the process.'}]}
+];
+
+/* ============================================================
+   5. 模拟数据：AI 排障预置结果
+   步骤引用知识库条目的步骤，来源标注为条目标题
+   ============================================================ */
+var PRESETS=[
+{id:'p502',hit:true,conf:.88,engine:'kb',
+q:'502 Bad Gateway Error: request to /api/v2/orders timed out after 5000ms',
+arts:[{id:'kb2',score:8.6,t:'502,Bad Gateway,网关,超时|502,Bad Gateway,gateway,timed out'},
+{id:'kb4',score:3.4,t:'超时,性能|timeout,performance'}],
+summary:'网关能收到请求但拿不到上游响应，优先怀疑节点假死或连接池耗尽。|The gateway gets the request but no usable response: suspect a hung node or exhausted pool.'},
+{id:'plogin',hit:true,conf:.92,engine:'kb',
+q:'所有用户登录都提示账号或密码错误，服务完全不可用|All users get "invalid username or password" — sign-in down',
+arts:[{id:'kb1',score:9.4,t:'登录,账号,密码,错误|login,username,password,invalid'}],
+summary:'全员同时登录失败，优先怀疑账号锁定、认证池耗尽或节点间策略不一致。|Every user fails at once: suspect the lockout policy, an exhausted pool or inconsistent policy.'},
+{id:'pexport',hit:true,conf:.85,engine:'kb',
+q:'导出订单报表得到 0 行，但页面明明有 1000 多条记录|Order export returns 0 rows although the page lists 1,000+ records',
+arts:[{id:'kb3',score:9.1,t:'导出,0 行,报表|export,0 rows,report'}],
+summary:'页面有数据而导出为空，说明导出查询条件有问题：默认区间是「当月 1 日至今」，残留区间会查到空区间。|The data is there, so the export query is wrong: the default window is "1st of the month to now".'},
+{id:'pdocker',hit:true,conf:.90,engine:'kb',
+q:'docker 容器一直 CrashLoopBackOff，日志报 database connection refused|Docker container crash-loops — the log says "database connection refused"',
+arts:[{id:'kb5',score:9.6,t:'容器,CrashLoopBackOff,connection refused|container,CrashLoopBackOff,connection refused'}],
+summary:'CrashLoopBackOff 基本都发生在启动阶段，"connection refused" 说明应用早于数据库启动。|A CrashLoopBackOff happens at start-up: "connection refused" means the app started too early.'},
+{id:'pother',hit:false,conf:.31,engine:'rules',
+q:'客户列表按角色筛选后分页错乱，第二页出现重复数据|Pagination breaks when filtering by role — page 2 repeats rows',
+arts:[],
+summary:'知识库中没有匹配条目，以下按「功能缺陷」给出通用排查清单；定位根因后建议沉淀。|No article matches, so here is the generic checklist for "product defect". Promote it later.',
+steps:[
+{t:'稳定复现路径|Reproduce it reliably',d:'记录完整复现步骤：账号类型、操作路径、输入数据、环境版本与浏览器。|Write down the reproduction path: account type, screens, input data, version, browser.'},
+{t:'确认是否已知问题|Check for a known issue',d:'检索知识库与历史工单，确认是否为已记录并已修复的缺陷。|Search the knowledge base and past tickets for a recorded, fixed defect.'},
+{t:'界定影响范围|Scope the impact',d:'确认是仅当前用户还是所有用户，判断严重级别与是否需要临时规避方案。|Decide whether it affects one user or everyone, and if a workaround is needed.'},
+{t:'转研发并跟踪|Escalate to engineering',d:'附复现材料提交研发，跟踪修复版本并在回归时通知客户。|Send the reproduction material to engineering and inform the customer when verified.'}]}
+];
+
+/* ============================================================
+   6. 趋势数据：10-03 ~ 11-02 共 31 天
+   新建 14 单（与工单表一致），解决 9 单，结余 5 单
+   ============================================================ */
+var TREND=(function(){
+var created=[0,0,1,0,0,1,0,0,0,1,0,0,0,0,0,0,2,0,1,0,1,0,0,2,0,0,0,2,0,1,2];
+var resolved=[0,0,1,0,0,1,0,0,0,1,0,0,0,0,0,0,1,1,1,0,0,0,0,3,0,0,0,0,0,0,0];
+var out=[],i,d;
+for(i=0;i<31;i++){ d=new Date(2026,9,3+i);
+out.push({date:('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2),created:created[i],resolved:resolved[i]});}
+return out;})();
+
+/* 7. 工具函数 */
+var lang='zh';
+/** 解析 '中文|English' 形式的双语字符串 */
+function L(s){ if(s==null) return '';
+var i=s.indexOf('|'); return i<0?s:(lang=='zh'?s.slice(0,i):s.slice(i+1)); }
+/** 模板替换：{{key}} 取字典 */
+function T(str){ return str.replace(/\{\{(\w[\w.]*)\}\}/g,function(m,k){ return L(DICT[k]); }); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+/** 徽章 */
+function badge(t,tone){ return '<span class="badge badge-'+tone+'">'+esc(t)+'</span>'; }
+/** 分钟数 → 「3小时12分」/「3h12m」 */
+function fmtMinutes(mins){
+if(mins==null) return '—';
+var m=Math.abs(Math.round(mins)),h=Math.floor(m/60),r=m%60,d=Math.floor(h/24),rh=h%24;
+if(lang=='en') return m<60?m+'m':h<24?(r?h+'h'+r+'m':h+'h'):(rh?d+'d'+rh+'h':d+'d');
+return m<60?m+'分钟':h<24?(r?h+'小时'+r+'分':h+'小时'):(rh?d+'天'+rh+'小时':d+'天'); }
+/** 剩余时间 → 「剩 3小时12分」/「已超时 2小时」 */
+function fmtRemaining(m){
+if(m==null) return lang=='en'?'Completed':'已完成';
+if(m<0) return (lang=='en'?'Overdue ':'已超时 ')+fmtMinutes(m);
+return (lang=='en'?'in ':'剩 ')+fmtMinutes(m); }
+function articleById(id){ for(var i=0;i<KB.length;i++) if(KB[i].id==id) return KB[i]; return KB[0]; }
+
+/* 8. 仪表盘渲染 */
+function renderMetrics(){
+var c=[['m.total','14','unit.count','m.total.sub','accent'],['m.resp','46.4','unit.min','m.resp.sub','ok'],
+['m.timeout','14.3','unit.pct','m.timeout.sub','danger'],['m.kb','80','unit.pct','m.kb.sub','ok']];
+document.getElementById('metricGrid').innerHTML=c.map(function(x){
+return T('<div class="card metric"><div class="metric-label">{{'+x[0]+'}}</div><div class="metric-value tone-'+x[4]+
+'">'+x[1]+'<span class="metric-unit">{{'+x[2]+'}}</span></div><div class="metric-sub muted">{{'+x[3]+'}}</div></div>');}).join('');}
+/** 手绘 SVG 折线图：JS 计算 path 的 d 属性 */
+function renderTrend(){
+var W=760,H=210,pL=34,pR=14,pT=12,pB=28,iW=W-pL-pR,iH=H-pT-pB,i,y,s=[];
+var max=Math.max(2,Math.max.apply(null,TREND.map(function(d){return Math.max(d.created,d.resolved);})));
+var st=iW/(TREND.length-1);
+function X(j){ return pL+j*st; }
+function Y(v){ return pT+iH-v/max*iH; }
+function pts(k){ return TREND.map(function(d,j){return X(j).toFixed(1)+','+Y(d[k]).toFixed(1);}).join(' '); }
+for(i=1;i<=4;i++){ y=Y(max*(4-i)/3);
+s.push('<line x1="'+pL+'" x2="'+(W-pR)+'" y1="'+y.toFixed(1)+'" y2="'+y.toFixed(1)+'" stroke="#232c38"/>');
+s.push('<text x="'+(pL-8)+'" y="'+(y+3.5).toFixed(1)+'" text-anchor="end" fill="#6b7885" font-size="10" font-family="monospace">'+Math.round(max*(4-i)/3)+'</text>');}
+s.push('<path d="M '+pL+','+(pT+iH)+' L '+TREND.map(function(d,j){return X(j).toFixed(1)+','+Y(d.created).toFixed(1);}).join(' L ')+' L '+X(TREND.length-1).toFixed(1)+','+(pT+iH)+' Z" fill="rgba(91,124,250,.13)"/>');
+[['resolved','#3fb950','4 3'],['created','#5b7cfa','']].forEach(function(c){
+s.push('<polyline points="'+pts(c[0])+'" fill="none" stroke="'+c[1]+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"'+(c[2]?' stroke-dasharray="'+c[2]+'"':'')+'/>');});
+TREND.forEach(function(d,j){ /* 稀疏数据下标出数据点更易读 */
+if(d.created) s.push('<circle cx="'+X(j).toFixed(1)+'" cy="'+Y(d.created).toFixed(1)+'" r="2.6" fill="#5b7cfa"/>');
+if(d.resolved) s.push('<circle cx="'+X(j).toFixed(1)+'" cy="'+Y(d.resolved).toFixed(1)+'" r="2.6" fill="#3fb950"/>');});
+for(i=0;i<TREND.length;i+=5)
+s.push('<text x="'+X(i).toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" fill="#6b7885" font-size="10" font-family="monospace">'+TREND[i].date+'</text>');
+document.getElementById('trendChart').innerHTML=s.join('');}
+/** 横向条形图（分类 / 状态） */
+function renderBars(el,rows,alt){
+var max=Math.max(1,Math.max.apply(null,rows.map(function(r){return r.count;})));
+document.getElementById(el).innerHTML=rows.map(function(r){
+return '<div class="bar-row"><span class="bar-label truncate">'+esc(r.label)+'</span><div class="bar-track"><div class="bar-fill'+(alt?' alt':'')+'" style="width:'+(r.count/max*100).toFixed(1)+'%"></div></div><span class="bar-val">'+r.count+'</span></div>';}).join('');}
+function renderDashboard(){
+renderMetrics(); renderTrend();
+var cc={},sc={};
+TICKETS.forEach(function(t){ cc[t.cat]=(cc[t.cat]||0)+1; sc[t.status]=(sc[t.status]||0)+1; });
+renderBars('catBars',Object.keys(cc).map(function(k){return {label:L(CATEGORIES[k]),count:cc[k]};}).sort(function(a,b){return b.count-a.count;}));
+renderBars('statusBars',['new','triaged','in_progress','pending','resolved','closed'].filter(function(k){return sc[k];})
+.map(function(k){return {label:L(STATUSES[k][0]),count:sc[k]};}),true);}
+
+/* 9. 工单渲染（含展开详情） */
+var selTicket=null,selKb='kb1';
+/** SLA 状态：[状态, 文案, 数值] × 2（首次响应 / 解决时限） */
+function slaInfo(t){
+var done=t.status=='resolved'||t.status=='closed',en=lang=='en',ans=L(DICT['t.sla.answered']);
+var rS=t.respBreach?'danger':(t.resp!=null?'ok':'warn');
+var rL=t.respBreach?(en?'Response overdue':'响应超时'):(t.resp!=null?ans:(en?'Awaiting':'待响应'));
+var rV=t.respBreach?(en?'Overdue 15m':'已超时 15分钟'):(t.resp!=null?ans:fmtRemaining(t.respRemain));
+var sS=(t.remain!=null&&t.remain<0)?'danger':(done?'ok':(t.remain<120?'warn':'ok'));
+var sL=(t.remain!=null&&t.remain<0)?(en?'Overdue':'解决超时'):(done?L(DICT['t.sla.done']):(t.remain<120?(en?'Due soon':'即将超时'):(en?'On track':'正常')));
+return [rS,rL,rV,sS,sL,done?L(DICT['t.sla.done']):fmtRemaining(t.remain)];}
+/** 组装工单时间线（自动事件 + 每单自定义备注） */
+function ticketTimeline(t){
+var en=lang=='en',sup=en?'Kevin · Support':'Kevin · 客服',ev=[];
+ev.push({c:'created',a:en?'System':'系统',x:en?('Created via the portal: '+L(t.title)):('客户门户提交工单：'+L(t.title))});
+ev.push({c:'status',a:'✦ Polaris',x:en?('AI classified as '+L(CATEGORIES[t.cat])+' / '+t.pri+', confidence 92%'):('AI 自动分类为「'+L(CATEGORIES[t.cat])+'」/ '+t.pri+'，置信度 92%')});
+if(t.resp!=null) ev.push({c:'comment',a:sup,x:en?('First response sent after '+t.resp+' business minutes'):('首次响应耗时 '+t.resp+' 个工作分钟')});
+if(t.status!='new') ev.push({c:'status',a:sup,x:en?('Status changed to '+L(STATUSES[t.status][0])):('状态流转：'+L(STATUSES[t.status][0]))});
+ev.push({c:'comment',a:sup,x:L(t.note)});
+if(t.kb){ var kb=articleById(t.kbId);
+ev.push({c:'kb',a:'✦ Polaris',x:en?('Linked to the article "'+L(kb.title)+'"'):('已关联知识库条目《'+L(kb.title)+'》')});}
+return ev;}
+function renderTickets(){
+var en=lang=='en',done=L(DICT['t.sla.done']);
+document.getElementById('ticketBody').innerHTML=TICKETS.map(function(t){
+var st=STATUSES[t.status];
+var cls=(t.remain!=null&&t.remain<0)?'overdue':(t.remain!=null&&t.remain<120?'soon':'muted');
+var sla=t.remain==null?done:fmtRemaining(t.remain);
+var sub=t.remain==null?done:(en?'resp '+fmtMinutes(t.resp):'响应 '+fmtMinutes(t.resp));
+return '<tr class="tk-row'+(selTicket==t.code?' sel':'')+'" data-code="'+t.code+'">'+
+'<td class="mono muted">'+t.code+'</td>'+
+'<td><div class="row gap7"><span class="truncate">'+esc(L(t.title))+(t.kb?badge('◫','info'):'')+'</span></div></td>'+
+'<td>'+badge(t.pri,t.pri.toLowerCase())+'</td>'+
+'<td class="dim">'+esc(L(CATEGORIES[t.cat]))+'</td>'+
+'<td>'+badge(L(st[0]),st[1])+'</td>'+
+'<td><span class="mono '+cls+'">'+esc(sla)+'</span><div class="requester mono">'+esc(sub)+'</div></td>'+
+'<td>'+(t.kb?badge('◫','info'):'<span class="muted">—</span>')+'</td></tr>'+
+(selTicket==t.code?'<tr class="detail-row"><td colspan="7">'+detailHtml(t)+'</td></tr>':'');}).join('');}
+/** 展开的工单详情：SLA 倒计时 + 状态流转 + 处理记录时间线 */
+function detailHtml(t){
+var en=lang=='en',s=slaInfo(t),pol=SLA_POLICY[t.pri];
+var head='<div class="detail-sec full"><h4>'+esc(L(t.title))+'</h4><div class="sla-meta">'+esc(L(DICT['t.created']))+' '+esc(t.created)+' · '+esc(L(PRIORITIES[t.pri]))+' ('+t.pri+') · '+esc(L(CATEGORIES[t.cat]))+'</div></div>';
+var slaCard='<div class="detail-sec"><h4>'+esc(L(DICT['t.sla.title']))+'</h4>'+
+'<div class="sla-item"><div class="row-between"><span class="dim">'+esc(L(DICT['t.sla.resp']))+'</span>'+badge(s[1],s[0])+'</div>'+
+'<div class="sla-value st-'+s[0]+'">'+esc(s[2])+'</div><div class="sla-meta">'+(en?'Response ':'响应 ')+fmtMinutes(pol[0])+(en?' · resolution ':' · 解决 ')+fmtMinutes(pol[1])+'</div></div>'+
+'<div class="sla-item"><div class="row-between"><span class="dim">'+esc(L(DICT['t.sla.resolve']))+'</span>'+badge(s[4],s[3])+'</div>'+
+'<div class="sla-value st-'+s[3]+'">'+esc(s[5])+'</div><div class="sla-meta">'+esc(L(DICT['t.sla.target']))+' '+fmtMinutes(pol[1])+'</div></div></div>';
+var nexts=(TRANSITIONS[t.status]||[]).map(function(code){
+return '<button class="btn btn-sm'+(code=='resolved'||code=='closed'?' btn-primary':'')+'" data-move="'+code+'" data-code="'+t.code+'">'+esc(L(DICT['t.flow.to']))+' '+esc(L(STATUSES[code][0]))+' →</button>';}).join('');
+var flowCard='<div class="detail-sec"><h4>'+esc(L(DICT['t.flow.title']))+'</h4>'+
+'<textarea class="flow-note" id="flowNote" placeholder="'+esc(L(DICT['t.flow.note']))+'"></textarea><div class="flow-btns">'+nexts+
+'<button class="btn btn-sm" data-note="'+t.code+'">'+esc(L(DICT['t.flow.add']))+'</button></div></div>';
+var tl='<div class="detail-sec"><h4>'+esc(L(DICT['t.timeline.title']))+'</h4>'+ticketTimeline(t).map(function(e){
+return '<div class="event"><div class="event-dot ev-'+e.c+'"></div><div class="grow"><div class="row gap8"><strong class="actor">'+esc(e.a)+'</strong></div><div class="event-note">'+esc(e.x)+'</div></div></div>';}).join('')+'</div>';
+return '<div class="detail-wrap">'+head+slaCard+flowCard+tl+'</div>';}
+
+/* 10. 知识库渲染 */
+function renderKb(){
+var a=articleById(selKb);
+document.getElementById('kbSub').textContent=L(DICT['kb.sub']);
+document.getElementById('kbList').innerHTML=KB.map(function(x){
+return '<div class="kb-row'+(selKb==x.id?' active':'')+'" data-kb="'+x.id+'"><div class="kb-row-title">'+esc(L(x.title))+'</div>'+
+'<div class="kb-row-meta">'+badge(L(CATEGORIES[x.cat]),'mute')+(x.src=='ticket'?badge('◫ '+x.srcCode,'info'):'')+
+'</div><div class="kb-row-sum truncate">'+esc(L(x.summary))+'</div></div>';}).join('');
+var steps=a.steps.map(function(s,i){
+return '<li><strong>'+(i+1)+'. '+esc(L(s.t))+'</strong><div class="muted mt3">'+esc(L(s.d))+'</div></li>';}).join('');
+document.getElementById('kbDetail').innerHTML='<div class="card-head"><h3 class="grow truncate">'+esc(L(a.title))+'</h3></div><div class="card-body">'+
+'<div class="row gap6 wrap mb12">'+badge(L(CATEGORIES[a.cat]),'mute')+badge(L(DICT['kb.src.'+a.src]),'mute')+'</div>'+
+'<div class="kb-summary">'+esc(L(a.summary))+'</div>'+
+'<details class="kb-steps-box" open><summary>'+esc(L(DICT['kb.steps']))+'</summary><ol class="kb-steps">'+steps+'</ol></details>'+
+'<div class="kb-content">'+esc(L(a.content))+'</div>'+
+'</div>';}
+
+/* 11. AI 排障渲染（纯前端模拟，不请求任何接口） */
+var assistantResult=null;
+/** 依据输入文本挑选预置结果：命中关键词则用对应条目，否则走通用清单 */
+function currentPreset(){
+var q=document.getElementById('aiText').value.toLowerCase();
+function has(a){ for(var i=0;i<a.length;i++) if(q.indexOf(a[i])>=0) return true; return false; }
+if(has(['502','bad gateway','网关','gateway','timed out','超时','timeout'])) return PRESETS[0];
+if(has(['登录','login','密码','password','账号','username'])) return PRESETS[1];
+if(has(['导出','export','0 行','0 rows','报表','report'])) return PRESETS[2];
+if(has(['docker','容器','container','crashloop','connection refused'])) return PRESETS[3];
+return PRESETS[4];}
+/** 把预置结果组装成可渲染结构（步骤引用知识库条目，上限 5 步） */
+function buildResult(p,q){
+var steps=[];
+if(p.steps&&p.steps.length) p.steps.forEach(function(s){ steps.push({t:s.t,d:s.d,src:null}); });
+else p.arts.forEach(function(ref){ var a=articleById(ref.id);
+/* 保留原始双语标题，切换语言后再由 L() 解析；此处若提前解析会丢失英文 */
+a.steps.forEach(function(s){ steps.push({t:s.t,d:s.d,src:a.title}); });});
+steps=steps.slice(0,5);
+return {hit:p.hit,conf:p.conf,engine:p.engine,summary:p.summary,steps:steps,arts:p.arts,q:q!=undefined?q:p.q};}
+function renderAssistant(){
+var out=document.getElementById('aiOut'),p=assistantResult;
+document.getElementById('aiSamples').innerHTML=PRESETS.map(function(x,i){
+return '<button class="sample" data-preset="'+i+'">'+esc(L(x.q))+'</button>';}).join('');
+var s='<div class="card"><div class="card-head"><h3>'+esc(L(DICT['ai.result']))+'</h3><div class="row gap6 wrap">'+
+badge(p.hit?L(DICT['ai.badge.hit']):L(DICT['ai.badge.miss']),p.hit?'ok':'warn')+
+badge(L(DICT['ai.badge.conf'])+' '+Math.round(p.conf*100)+'%','mute')+
+badge(L(DICT['ai.badge.engine'])+' '+p.engine,'mute')+'</div></div>'+
+'<div class="card-body"><div class="summary">'+esc(L(p.summary))+'</div></div></div>';
+var steps=p.steps.map(function(st,i){
+return '<li><div class="step-title"><span class="step-no">'+(i+1)+'</span><strong>'+esc(L(st.t))+'</strong></div>'+
+'<div class="step-detail">'+esc(L(st.d))+'</div>'+(st.src?'<div class="step-src">'+esc(L(DICT['ai.src']))+': '+esc(L(st.src))+'</div>':'')+'</li>';}).join('');
+s+='<div class="card"><div class="card-head"><h3>'+esc(L(DICT['ai.steps']))+'</h3><span class="muted tiny">'+p.steps.length+'</span></div><div class="card-body"><ol class="aisteps">'+steps+'</ol></div></div>';
+if(p.arts.length){
+s+='<div class="card"><div class="card-head"><h3>'+esc(L(DICT['ai.matched']))+'</h3></div><div class="card-body">'+p.arts.map(function(ref){
+var a=articleById(ref.id),terms=L(ref.t).split(',');
+return '<div class="matched"><div class="row gap7"><span class="matched-title">'+esc(L(a.title))+'</span>'+badge(L(CATEGORIES[a.cat]),'mute')+'</div>'+
+'<div class="muted mt3 sm">'+esc(L(a.summary))+'</div><div class="terms">'+esc(L(DICT['ai.rel']))+' '+ref.score+' · '+esc(L(DICT['ai.terms']))+' '+
+terms.map(function(x){return '<code>'+esc(x)+'</code>';}).join('')+'</div></div>';}).join('')+'</div></div>';
+}else{
+s+='<div class="card"><div class="card-head"><h3>'+esc(L(DICT['ai.matched']))+'</h3></div><div class="card-body"><div class="muted">◫ '+esc(L(DICT['ai.nomatch']))+'</div></div></div>';}
+out.innerHTML=s;}
+
+/* 12. 语言切换与标签页切换 */
+function applyI18n(){
+var nodes=document.querySelectorAll('[data-i18n]'),i;
+for(i=0;i<nodes.length;i++) nodes[i].textContent=L(DICT[nodes[i].getAttribute('data-i18n')]);
+document.documentElement.setAttribute('lang',lang=='zh'?'zh-CN':'en');
+document.getElementById('langLabel').textContent=lang=='zh'?'EN':'中文';
+document.getElementById('aiText').value=assistantResult?L(assistantResult.q):L(PRESETS[0].q);
+renderDashboard(); renderTickets(); renderKb(); renderAssistant();}
+function switchLang(){ lang=lang=='zh'?'en':'zh'; applyI18n(); }
+function switchPage(name){
+var pages=document.querySelectorAll('.page'),items=document.querySelectorAll('.nav-item'),i;
+for(i=0;i<pages.length;i++) pages[i].classList.toggle('active',pages[i].id=='page-'+name);
+for(i=0;i<items.length;i++) items[i].classList.toggle('active',items[i].getAttribute('data-page')==name);
+window.scrollTo(0,0);}
+
+/* 13. 事件绑定 */
+document.getElementById('nav').addEventListener('click',function(e){
+var b=e.target.closest('.nav-item'); if(b) switchPage(b.getAttribute('data-page'));});
+document.getElementById('langBtn').addEventListener('click',switchLang);
+/* 工单行点击 → 展开详情；详情内可流转状态 / 添加备注 */
+document.getElementById('ticketBody').addEventListener('click',function(e){
+function find(code){ for(var i=0;i<TICKETS.length;i++) if(TICKETS[i].code==code) return TICKETS[i]; return null; }
+var mv=e.target.closest('[data-move]');
+if(mv){ var t=find(mv.getAttribute('data-code')); if(!t) return;
+var to=mv.getAttribute('data-move'),box=document.getElementById('flowNote');
+var note=box&&box.value.trim()?box.value.trim():(L(DICT['t.statusChanged'])+': '+L(STATUSES[t.status][0])+' → '+L(STATUSES[to][0]));
+t.status=to; t.note=t.note+' ['+note+']';
+if(to=='resolved'||to=='closed') t.remain=null;
+renderTickets(); return; }
+var nb=e.target.closest('[data-note]');
+if(nb){ var t2=find(nb.getAttribute('data-note')),el=document.getElementById('flowNote');
+if(t2&&el&&el.value.trim()){ t2.note=t2.note+' · '+el.value.trim(); renderTickets(); } return; }
+var row=e.target.closest('.tk-row');
+if(row){ var c=row.getAttribute('data-code'); selTicket=(selTicket==c)?null:c; renderTickets(); }});
+document.getElementById('kbList').addEventListener('click',function(e){
+var r=e.target.closest('.kb-row'); if(r){ selKb=r.getAttribute('data-kb'); renderKb(); }});
+/* AI 排障：示例按钮 + 生成按钮 + Ctrl+Enter */
+document.getElementById('aiSamples').addEventListener('click',function(e){
+var b=e.target.closest('[data-preset]'); if(!b) return;
+var p=PRESETS[+b.getAttribute('data-preset')];
+document.getElementById('aiText').value=L(p.q);
+assistantResult=buildResult(p); renderAssistant();});
+document.getElementById('aiRun').addEventListener('click',function(){
+var btn=document.getElementById('aiRun');
+btn.disabled=true; btn.textContent=L(DICT['ai.running']);
+setTimeout(function(){ assistantResult=buildResult(currentPreset(),document.getElementById('aiText').value);
+renderAssistant(); btn.disabled=false; btn.textContent=L(DICT['ai.run']); },240);});
+document.getElementById('aiText').addEventListener('keydown',function(e){
+if(e.key=='Enter'&&(e.ctrlKey||e.metaKey)){ e.preventDefault(); document.getElementById('aiRun').click(); }});
+
+/* 14. 启动：默认展示 502 示例的排查结果 */
+assistantResult=buildResult(PRESETS[0]);
+applyI18n();
+</script>
+</body>
+</html>
