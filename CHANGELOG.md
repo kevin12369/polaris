@@ -5,6 +5,48 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-11-04
+
+### Added
+
+**Statutory holiday support.** SLA countdowns previously skipped weekends and nights but
+kept running through statutory holidays — a ticket created during the National Day week
+counted down for all seven days off. Now:
+
+- Chinese statutory holidays are built in (`backend/app/holidays.py`), with the 2026
+  arrangement taken from the State Council notice of 2025-11-04
+- Make-up working days count normally (e.g. Saturday 10 October, designated a working day
+  for the National Day adjustment)
+- Workspaces can add their own days off (company shutdowns) and extra working days (on-call)
+  via the settings API and the Settings screen
+- Years without bundled data fall back to the regular weekday schedule instead of failing
+
+**API reference.** New `docs/API.md` and `docs/API.en.md` documenting every endpoint, with
+integration examples for email and chat ingestion. The deployment guide previously linked to
+an `docs/API.md` that did not exist.
+
+**Roadmap.** New `docs/ROADMAP.md` and `docs/ROADMAP.en.md` — a living document of what is
+planned and why, ordered by how many small businesses actually need each item.
+
+**Community infrastructure.** CONTRIBUTING, CODE_OF_CONDUCT and SECURITY policies; issue
+forms for bugs and feature requests; a pull request template; Discussions enabled with 30
+bilingual labels.
+
+**Maintenance automation.**
+- Dependabot for pip, npm and GitHub Actions dependencies
+- Stale bot: flags issues after 60 days of inactivity, closes them 14 days later
+- Labeler: applies module/type/area labels based on changed files
+- Release drafter: generates release notes and the next version number from merged PRs
+- Weekly health check: runs the full test suite and build; opens an issue on failure
+- `scripts/release.sh`: test → tag → release → upload source archive in one command
+
+### Fixed
+
+- The custom test runner in `tests/test_sla.py` sat in the middle of the file, so any test
+  appended after it never ran. Moved to the end of the file.
+- The working-hours endpoint now validates holiday dates as `YYYY-MM-DD` and rejects
+  malformed input with a clear message instead of silently accepting it.
+
 ## [1.0.0] - 2026-11-02
 
 First public release.

@@ -8,6 +8,7 @@ A lightweight ticketing system for small and mid-sized teams: every customer iss
 **Live demo →** https://kevin12369.github.io/polaris/ (includes mock data, no backend required)
 
 - [中文文档](#readme) · [English](#readme)
+- [Roadmap](docs/ROADMAP.en.md) · [API reference](docs/API.en.md)
 
 <p align="center">
   <img src="docs/screenshots/02-dashboard.png" width="820" alt="Dashboard">
@@ -116,6 +117,18 @@ Demo account: `demo@acme.com` / `demo1234`
 ### Working hours (Settings)
 
 Not every team works the same week. Under **Settings → Working hours** you can tick the days you staff and set start/end times. New tickets use the new schedule; existing SLA deadlines stay untouched. Only administrators can change it.
+
+### Holidays (since v1.1.0)
+
+Chinese statutory holidays are built in. **Holidays do not count towards SLA countdowns**;
+make-up working days do:
+
+- All 2026 statutory holidays and make-up working days are included (from the State Council notice)
+- A ticket created during the National Day week starts counting on the first working day after
+- Weekend make-up working days (e.g. 10 October) count normally
+- You can add your own days off (company shutdowns) and extra working days (on-call shifts)
+
+Years without bundled data fall back to the regular weekday schedule instead of failing.
 
 ### Knowledge base
 
@@ -264,7 +277,8 @@ The e2e suite uses a unique run id, so it can be run repeatedly without conflict
 - Single-instance SQLite deployment. Fine up to ~50 people; move to PostgreSQL beyond that.
 - No file attachments on tickets — descriptions and error text only.
 - No inbound email or chat ingestion yet; `POST /api/tickets` is the integration point.
-- The working-hours calendar covers weekdays only. Holidays need a small extension.
+- Bundled holiday data currently covers 2026 only (`backend/app/holidays.py`).
+- No ticket attachments yet; email/chat ingestion needs a webhook on your side (`POST /api/tickets` works as the endpoint).
 - The demo page is static with mock data; the real UI needs the backend.
 
 ## License

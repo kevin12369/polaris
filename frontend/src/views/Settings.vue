@@ -14,7 +14,16 @@ const form = ref({
   work_days: [0, 1, 2, 3, 4],
   work_start_hour: 9,
   work_end_hour: 18,
+  holidays: [],
+  extra_workdays: [],
 })
+
+// 内置法定节假日（只读，展示给用户看）
+const builtinHolidays = ref([])
+const builtinExtra = ref([])
+// 自定义休假日的新增输入
+const newHoliday = ref('')
+const newExtra = ref('')
 
 const DAYS = computed(() => [
   { v: 0, label: t('day.mon') },
@@ -35,6 +44,30 @@ function toggleDay(v) {
   form.value.work_days.sort((a, b) => a - b)
 }
 
+function addHoliday() {
+  const d = newHoliday.value.trim()
+  if (!d) return
+  if (!form.value.holidays.includes(d)) form.value.holidays.push(d)
+  form.value.holidays.sort()
+  newHoliday.value = ''
+}
+
+function removeHoliday(d) {
+  form.value.holidays = form.value.holidays.filter((x) => x !== d)
+}
+
+function addExtra() {
+  const d = newExtra.value.trim()
+  if (!d) return
+  if (!form.value.extra_workdays.includes(d)) form.value.extra_workdays.push(d)
+  form.value.extra_workdays.sort()
+  newExtra.value = ''
+}
+
+function removeExtra(d) {
+  form.value.extra_workdays = form.value.extra_workdays.filter((x) => x !== d)
+}
+
 async function load() {
   loading.value = true
   try {
@@ -43,7 +76,11 @@ async function load() {
       work_days: res.work_days,
       work_start_hour: res.work_start_hour,
       work_end_hour: res.work_end_hour,
+      holidays: res.custom_holidays || [],
+      extra_workdays: res.custom_extra_workdays || [],
     }
+    builtinHolidays.value = res.builtin_holidays || []
+    builtinExtra.value = res.builtin_extra_workdays || []
     isDefault.value = res.is_default
   } catch (e) {
     error.value = e.message
@@ -61,6 +98,8 @@ async function save() {
       work_days: form.value.work_days,
       work_start_hour: Number(form.value.work_start_hour),
       work_end_hour: Number(form.value.work_end_hour),
+      holidays: form.value.holidays,
+      extra_workdays: form.value.extra_workdays,
     })
     isDefault.value = false
     success.value = res.note
@@ -145,6 +184,83 @@ onMounted(load)
           <strong>{{ (form.work_end_hour - form.work_start_hour) * form.work_days.length }} {{ t('s.hoursUnit') }}</strong>
         </div>
 
+        <!-- 节假日 -->
+        <div class="section">
+          <div class="section-head">
+            <h4>{{ t('s.holidays') }}</h4>
+            <span class="muted tiny">{{ t('s.holidaysHint') }}</span>
+          </div>
+
+          <div class="builtin-note muted">
+            {{ t('s.builtinHolidays') }}
+            <span class="date-chips">
+              <span v-for="d in builtinHolidays" :key="d" class="chip chip-static">{{ d.slice(5) }}</span>
+            </span>
+          </div>
+          <div v-if="builtinExtra.length" class="builtin-note muted">
+            {{ t('s.builtinExtra') }}
+            <span class="date-chips">
+              <span v-for="d in builtinExtra" :key="d" class="chip chip-work">{{ d.slice(5) }}</span>
+            </span>
+          </div>
+
+          <div class="field">
+            <label>{{ t('s.customHolidays') }}</label>
+            <div class="add-row">
+              <input
+                v-model="newHoliday"
+                type="date"
+                class="input"
+                :disabled="!isAdmin()"
+                @keyup.enter="addHoliday"
+              />
+              <button class="btn btn-sm" :disabled="!isAdmin() || !newHoliday" @click="addHoliday">
+                {{ t('common.add') }}
+              </button>
+            </div>
+            <div v-if="form.holidays.length" class="date-chips custom">
+              <span v-for="d in form.holidays" :key="d" class="chip chip-custom">
+                {{ d }}
+                <button
+                  v-if="isAdmin()"
+                  class="chip-x"
+                  :title="t('common.remove')"
+                  @click="removeHoliday(d)"
+                >×</button>
+              </span>
+            </div>
+            <p v-else class="muted tiny">{{ t('s.noCustomHolidays') }}</p>
+          </div>
+
+          <div class="field">
+            <label>{{ t('s.customExtra') }}</label>
+            <div class="add-row">
+              <input
+                v-model="newExtra"
+                type="date"
+                class="input"
+                :disabled="!isAdmin()"
+                @keyup.enter="addExtra"
+              />
+              <button class="btn btn-sm" :disabled="!isAdmin() || !newExtra" @click="addExtra">
+                {{ t('common.add') }}
+              </button>
+            </div>
+            <div v-if="form.extra_workdays.length" class="date-chips custom">
+              <span v-for="d in form.extra_workdays" :key="d" class="chip chip-work-custom">
+                {{ d }}
+                <button
+                  v-if="isAdmin()"
+                  class="chip-x"
+                  :title="t('common.remove')"
+                  @click="removeExtra(d)"
+                >×</button>
+              </span>
+            </div>
+            <p v-else class="muted tiny">{{ t('s.noCustomExtra') }}</p>
+          </div>
+        </div>
+
         <div v-if="!isAdmin()" class="msg mute">
           {{ t('s.adminOnly') }}
         </div>
@@ -213,6 +329,92 @@ onMounted(load)
 }
 .preview strong {
   color: var(--text);
+}
+
+/* ---------- 节假日区块 ---------- */
+.section {
+  margin: 18px 0 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.section-head h4 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.builtin-note {
+  margin-bottom: 8px;
+  font-size: 11.5px;
+  line-height: 1.8;
+}
+.date-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-left: 4px;
+}
+.date-chips.custom {
+  display: flex;
+  margin: 8px 0 0;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.chip-static {
+  background: rgba(242, 85, 90, 0.12);
+  border: 1px solid rgba(242, 85, 90, 0.3);
+  color: #ff9ea1;
+}
+.chip-work {
+  background: rgba(63, 185, 80, 0.1);
+  border: 1px solid rgba(63, 185, 80, 0.28);
+  color: #7ee787;
+}
+.chip-custom {
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border-strong);
+  color: var(--text-dim);
+}
+.chip-work-custom {
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border-strong);
+  color: #7ee787;
+}
+.chip-x {
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: var(--text-mute);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.chip-x:hover {
+  color: var(--danger);
+}
+.add-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.add-row .input {
+  flex: 1;
+  min-width: 0;
 }
 .actions {
   display: flex;
