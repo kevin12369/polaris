@@ -104,20 +104,17 @@ template: |
 
 autolabeler:
   - label: "feature"
-    title:
-      - contains: "feat"
+    title: "feat"
   - label: "fix"
-    title:
-      - contains: "fix"
+    title: "fix"
   - label: "documentation"
-    title:
-      - contains: "docs"
+    title: "docs"
   - label: "type: ci"
-    title:
-      - contains: "ci"
+    title: "ci"
   - label: "test"
-    title:
-      - contains: "test"
+    title: "test"
+  - label: "dependencies"
+    title: "chore(deps)"
 
 categories-contributor:
   - title: "👤 新贡献者"
