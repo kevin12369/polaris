@@ -272,7 +272,32 @@ The e2e suite uses a unique run id, so it can be run repeatedly without conflict
 
 ---
 
-## 8. Known limitations
+## 8. Roadmap
+
+See **[docs/ROADMAP.en.md](docs/ROADMAP.en.md)** for planned features and how they are prioritised.
+
+Roughly:
+
+- **v1.2** — ticket attachments, email and chat ingestion
+- **v1.3** — knowledge base version history, duplicate merging, bulk import/export
+- **v2.0** — PostgreSQL support, custom fields, webhook subscriptions, audit log
+
+The roadmap is alive — open a [Feature Request](https://github.com/kevin12369/polaris/issues/new?template=feature_request.yml) to discuss.
+
+## 9. Contributing
+
+| Channel | Purpose |
+|---|---|
+| [Issues](https://github.com/kevin12369/polaris/issues) | Bug reports and feature requests |
+| [Discussions](https://github.com/kevin12369/polaris/discussions) | Questions, ideas, show your deployment |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to submit a pull request |
+| [good first issue](https://github.com/kevin12369/polaris/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) | Friendly entry points for newcomers |
+
+Maintenance is automated: dependencies are updated by Dependabot, stale issues are closed
+automatically, release notes are assembled from merged pull requests, and a full verification
+runs every Monday.
+
+## 10. Known limitations
 
 - Single-instance SQLite deployment. Fine up to ~50 people; move to PostgreSQL beyond that.
 - No file attachments on tickets — descriptions and error text only.

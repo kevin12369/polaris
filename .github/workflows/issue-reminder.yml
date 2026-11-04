@@ -1,0 +1,71 @@
+name: Issue Triage Reminder
+
+# 每周检查一次未关闭的 issue，对长期无人跟进的自动提醒。
+#
+# 目的不是催人，而是避免 issue 悄悄烂在列表里 —— 公开仓库里
+# 一个三个月没人回的 issue，比没有 issue 更显得项目没人维护。
+
+on:
+  schedule:
+    # 每周三 08:00 UTC
+    - cron: "0 8 * * 3"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+            const now = Date.now();
+
+            // 拉取所有未关闭 issue
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner, repo,
+              state: 'open',
+              per_page: 100,
+              excludePullRequests: true,
+            });
+
+            let reminded = 0;
+            for (const issue of issues) {
+              // 有 pinned / help wanted / good first issue 标签的不打扰
+              const labels = issue.labels.map(l => l.name);
+              if (labels.some(l => ['pinned', 'help wanted', 'good first issue', 'question'].includes(l))) {
+                continue;
+              }
+              // 已有评论的不再提醒（说明有人在跟进）
+              if (issue.comments > 0) continue;
+              // 未满 30 天的不提醒
+              if (now - new Date(issue.created_at).getTime() < THIRTY_DAYS) continue;
+
+              // 已经提醒过的不重复
+              const marker = '<!-- triage-reminder -->';
+              const { data: comments } = await github.rest.issues.listComments({
+                owner, repo, issue_number: issue.number,
+              });
+              if (comments.some(c => c.body && c.body.includes(marker))) continue;
+
+              await github.rest.issues.createComment({
+                owner, repo,
+                issue_number: issue.number,
+                body: [
+                  marker,
+                  '**这条 issue 已经 30 天没有进展了。**',
+                  '',
+                  '如果它对你仍然有意义，欢迎补充信息 —— 尤其是复现步骤或实际使用场景。',
+                  '如果暂时做不了，也欢迎在 Discussions 聊一下思路，或者干脆关掉它，',
+                  '等有需要时再重开。',
+                ].join('\n'),
+              });
+              reminded++;
+            }
+
+            core.info(`已提醒 ${reminded} 条 issue（共检查 ${issues.length} 条）`);

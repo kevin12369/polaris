@@ -7,7 +7,7 @@
 
 **在线演示 →** https://kevin12369.github.io/polaris/ （含模拟数据，无需后端）
 
-[English](README.en.md) · [部署指南](docs/部署指南.md) · [路线图](docs/ROADMAP.md) · [API 参考](docs/API.md)
+[English](README.en.md) · [部署指南](docs/部署指南.md) · [路线图](docs/ROADMAP.md) · [API 参考](docs/API.md) · [贡献指南](CONTRIBUTING.md)
 
 <p align="center">
   <img src="docs/screenshots/02-dashboard.png" width="820" alt="仪表盘">
@@ -320,7 +320,31 @@ e2e 测试用唯一标识，可重复运行不冲突。
 
 ---
 
-## 八、已知边界
+## 八、路线图
+
+计划中的特性与优先级见 **[docs/ROADMAP.md](docs/ROADMAP.md)**。
+
+大致方向：
+
+- **v1.2** —— 工单附件上传、邮件/微信渠道接入
+- **v1.3** —— 知识库版本历史、相似条目合并、批量导入导出
+- **v2.0** —— PostgreSQL 支持、自定义字段、Webhook 订阅、审计日志
+
+路线图是活的，欢迎提 [Feature Request](https://github.com/kevin12369/polaris/issues/new?template=feature_request.yml) 讨论。
+
+## 九、参与贡献
+
+| 渠道 | 用途 |
+|---|---|
+| [Issue](https://github.com/kevin12369/polaris/issues) | 报 bug、提需求 |
+| [Discussions](https://github.com/kevin12369/polaris/discussions) | 提问、想法、晒部署 |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | 提 PR 的流程与规范 |
+| [good first issue](https://github.com/kevin12369/polaris/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) | 适合第一次参与开源的切入点 |
+
+维护机制：依赖由 Dependabot 自动更新，陈旧 issue 自动关闭，
+发布说明由 PR 自动汇总生成，每周一自动跑一次完整验证。
+
+## 十、已知边界
 
 - 单实例 SQLite 部署，适合 5–50 人规模。多实例或更高并发需要换 Postgres。
 - 工单附件未实现，当前用文字描述 + 报错文本。
