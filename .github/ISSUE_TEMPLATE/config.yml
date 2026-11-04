@@ -1,0 +1,57 @@
+# 本文件用于配置 Issue 模板的行为。
+# GitHub 原生支持 blank_issues_enabled 和 contact_links 两个键。
+# Discussions 引导、联系方式、以及两个空白 Issue 入口都通过 contact_links 提供。
+
+# 允许直接创建空白 Issue —— 有些问题一句话就能说清，
+# 不该强迫用户去套一个长表单。
+blank_issues_enabled: true
+
+contact_links:
+  # ---------- 1. 讨论与提问：先看这里，很多问题在这里已经有答案了 ----------
+  - name: 💬 社区讨论（Discussions）
+    url: https://github.com/kevin12369/polaris/discussions
+    about: |
+      功能建议、技术方案、使用问答、经验分享 —— **先在这里讨论，别急着开 Issue**。
+      大改动（比如新模块、数据库结构调整）尤其建议先讨论方案。
+    expected_responses: 维护者通常会在 3 天内回复。
+
+  - name: ❓ 提问与咨询（Q&A）
+    url: https://github.com/kevin12369/polaris/discussions/categories/q-a
+    about: |
+      不确定问题该开 Issue 还是 Discussions？或者只是想问「这个能不能做到」。
+      也欢迎贴出你的部署环境和遇到的具体情况。
+    expected_responses: 维护者通常会在 3 天内回复。
+
+  # ---------- 2. 联系方式 ----------
+  - name: 📮 联系维护者
+    url: https://github.com/kevin12369/polaris/discussions
+    about: |
+      想直接联系维护者，可以先在 Discussions 里发帖，或发送邮件到
+      **maintainers@kevin12369.dev**。
+      注意：**行为问题举报**（违反行为准则）和**安全漏洞报告**请走各自专用渠道，
+      不要发到公开讨论区。
+    expected_responses: 维护者通常会在 3 天内回复。
+
+  # ---------- 3. 两个空白 Issue 入口 ----------
+  - name: ✨ 提功能建议（空白 Issue）
+    url: https://github.com/kevin12369/polaris/issues/new?labels=enhancement
+    about: |
+      想提一个功能建议但不想填长表单？点这里直接开一个空白 Issue，
+      说清楚「想解决什么问题」即可。会自动带上 `enhancement` 标签。
+    expected_responses: 维护者通常会在 3 天内回复。
+
+  - name: 📝 其他问题（空白 Issue）
+    url: https://github.com/kevin12369/polaris/issues/new
+    about: |
+      上面都不合适？直接开一个空白 Issue，把事情说清楚就行。
+      提 bug 的话建议用 [Bug 报告表单](https://github.com/kevin12369/polaris/issues/new?template=bug_report.yml)，
+      填得越全定位越快。
+    expected_responses: 维护者通常会在 3 天内回复。
+
+  # ---------- 4. 安全漏洞：必须走邮件，不要在公开渠道提交 ----------
+  - name: 🔒 报告安全漏洞
+    url: https://github.com/kevin12369/polaris/blob/main/SECURITY.md
+    about: |
+      发现安全漏洞请**不要开公开 Issue**，发送邮件到 **security@kevin12369.dev**。
+      公开 Issue 会让攻击者先看到细节。详见 SECURITY.md。
+    expected_responses: 48 小时内确认收到。

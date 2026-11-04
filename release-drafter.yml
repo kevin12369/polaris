@@ -1,0 +1,125 @@
+# Release Drafter 配置
+#
+# 自动把已合并的 PR 按 Conventional Commits 前缀分组，
+# 并按语义化版本规则推导下一个版本号。
+
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+
+categories:
+  - title: "⚠️ Breaking Changes"
+    labels:
+      - "breaking"
+      - "type: breaking"
+    collapse-after: 3
+
+  - title: "✨ 新功能"
+    labels:
+      - "feature"
+      - "type: feature"
+    collapse-after: 3
+
+  - title: "🐛 问题修复"
+    labels:
+      - "fix"
+      - "bug"
+      - "type: fix"
+    collapse-after: 3
+
+  - title: "📚 文档"
+    labels:
+      - "documentation"
+      - "docs"
+      - "type: docs"
+    collapse-after: 5
+
+  - title: "🧪 测试"
+    labels:
+      - "test"
+      - "type: test"
+    collapse-after: 5
+
+  - title: "🔧 维护"
+    labels:
+      - "chore"
+      - "refactor"
+      - "type: code"
+      - "ci"
+      - "type: ci"
+    collapse-after: 5
+
+  - title: "📦 依赖更新"
+    labels:
+      - "dependencies"
+    collapse-after: 5
+
+  - title: "🔒 安全"
+    labels:
+      - "security"
+      - "area: security"
+    collapse-after: 3
+
+change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
+change-title-escapes: '\<*_&'
+
+version-resolver:
+  major:
+    labels:
+      - "breaking"
+      - "type: breaking"
+  minor:
+    labels:
+      - "feature"
+      - "type: feature"
+  patch:
+    labels:
+      - "fix"
+      - "bug"
+      - "type: fix"
+      - "documentation"
+      - "docs"
+      - "type: docs"
+      - "chore"
+      - "refactor"
+      - "type: code"
+      - "test"
+      - "type: test"
+      - "ci"
+      - "type: ci"
+      - "dependencies"
+
+# 没有 label 的 PR 也归入「其他」
+exclude-labels:
+  - "skip-changelog"
+
+template: |
+  ## 本次更新
+
+  $CHANGES
+
+  ---
+
+  **完整变更**：$COMPARISON_URL
+  **在线演示**：https://kevin12369.github.io/polaris/
+
+autolabeler:
+  - label: "feature"
+    title:
+      - contains: "feat"
+  - label: "fix"
+    title:
+      - contains: "fix"
+  - label: "documentation"
+    title:
+      - contains: "docs"
+  - label: "type: ci"
+    title:
+      - contains: "ci"
+  - label: "test"
+    title:
+      - contains: "test"
+
+categories-contributor:
+  - title: "👤 新贡献者"
+    exclude-labels:
+      - "skip-changelog"

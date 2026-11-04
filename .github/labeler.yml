@@ -1,0 +1,97 @@
+# labeler 规则
+#
+# 匹配顺序从上到下，命中即打标签。
+# module  → 代码归属模块
+# type    → 变更类型
+# area    → 关注领域
+
+module:
+  - changed-files:
+      - any-glob-to-any-file: 'backend/app/routers/**'
+    labels: ['backend', 'module: ticket']
+  - changed-files:
+      - any-glob-to-any-file: 'backend/app/services/**'
+    labels: ['backend', 'module: engine']
+  - changed-files:
+      - any-glob-to-any-file: 'backend/app/sla.py'
+    labels: ['backend', 'module: sla']
+  - changed-files:
+      - any-glob-to-any-file: 'backend/app/models.py'
+    labels: ['backend', 'module: data']
+  - changed-files:
+      - any-glob-to-any-file: 'backend/app/migrations.py'
+    labels: ['backend', 'module: data']
+  - changed-files:
+      - any-glob-to-any-file: 'backend/tests/**'
+    labels: ['backend', 'test']
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/src/**'
+    labels: ['frontend']
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/**/package.json'
+    labels: ['frontend', 'dependencies']
+  - changed-files:
+      - any-glob-to-any-file: 'demo/**'
+    labels: ['demo', 'documentation']
+  - changed-files:
+      - any-glob-to-any-file: 'docs/**'
+    labels: ['documentation']
+  - changed-files:
+      - any-glob-to-any-file: '*.md'
+    labels: ['documentation']
+  - changed-files:
+      - any-glob-to-any-file: 'docker-compose.yml'
+    labels: ['deployment']
+  - changed-files:
+      - any-glob-to-any-file: '**/Dockerfile'
+    labels: ['deployment']
+  - changed-files:
+      - any-glob-to-any-file: '.github/**'
+    labels: ['ci']
+
+type:
+  - changed-files:
+      - any-glob-to-any-file: '**/*.md'
+      - any-glob-to-any-file: 'docs/**'
+    labels: ['type: docs']
+  - changed-files:
+      - any-glob-to-any-file: 'backend/tests/**'
+      - any-glob-to-any-file: '**/test_*.py'
+    labels: ['type: test']
+  - changed-files:
+      - any-glob-to-any-file: '.github/workflows/**'
+      - any-glob-to-any-file: '.github/dependabot.yml'
+    labels: ['type: ci']
+  - changed-files:
+      - any-glob-to-any-file: 'backend/app/**'
+      - any-glob-to-any-file: 'frontend/src/**'
+    labels: ['type: code']
+
+area:
+  - title:
+      - contains: 'SLA'
+      - contains: 'sla'
+      - contains: '工作时间'
+    labels: ['area: sla']
+  - title:
+      - contains: '安全'
+      - contains: 'security'
+      - contains: '权限'
+      - contains: '租户'
+    labels: ['area: security']
+  - title:
+      - contains: '检索'
+      - contains: '知识库'
+      - contains: 'knowledge'
+      - contains: '检索'
+    labels: ['area: knowledge']
+  - title:
+      - contains: '国际化'
+      - contains: 'i18n'
+      - contains: '英文'
+    labels: ['area: i18n']
+  - title:
+      - contains: '部署'
+      - contains: 'docker'
+      - contains: 'Docker'
+    labels: ['area: deployment']

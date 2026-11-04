@@ -1,0 +1,98 @@
+name: 功能建议
+description: 提出新功能、新模块或体验改进的想法
+title: "[feat]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢你的想法！
+
+        **提交前请先搜一下已有 Issue 和 Discussions** —— 可能已经有人在做同样的事，
+        也可能这个需求已经被讨论并否决了（那样能省你很多时间）。
+
+        **大改动请务必先在这里讨论，不要直接写 PR。**
+        维护者会先回复你方向是否可行，避免你写完几百行代码才发现要推翻。
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 这个功能要解决什么问题
+      description: |
+        重点说「问题」，不是「方案」。
+        「客服每天要手工整理 3 份 Excel」是问题；「加个导出按钮」是方案。
+        问题描述清楚了，方案往往不止一种。
+      placeholder: |
+        每周要手工统计各分类的工单数做周报，现在要从仪表盘截图，
+        再复制到 Excel 里重新排版，大概要花 40 分钟。
+    validations:
+      required: true
+
+  - type: textarea
+    id: scenario
+    attributes:
+      label: 期望的使用场景
+      description: |
+        谁、在什么情况下、怎么用这个功能？说清楚使用频率和当时的处境。
+      placeholder: |
+        每周五下午，客服主管（admin 角色）要给老板发一份包含
+        本周工单量、超时率的周报。现在只能截图仪表盘，
+        希望能直接生成一份可发送的周报（邮件或 Markdown）。
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 候选方案（可选）
+      description: |
+        如果你已经想好了怎么实现，写在这里会很有帮助；
+        **没想好也没关系**，先描述问题，我们一起设计。
+      placeholder: |
+        方案 A：在仪表盘加「导出周报」按钮，生成 Markdown 文本。
+        方案 B：加一个 /api/dashboard/report 接口，返回结构化数据，
+        由用户自己接到邮件或企微机器人上。
+    validations:
+      required: false
+
+  - type: dropdown
+    id: compat
+    attributes:
+      label: 是否影响现有用户
+      description: |
+        这个改动会不会破坏现有用法？选最接近的一项。
+        如果涉及数据结构或接口变更，请在下面补充说明迁移方式。
+      options:
+        - 不影响 —— 纯新增，现有功能和接口都不变
+        - 有影响但向后兼容 —— 默认行为不变，老配置继续可用
+        - 需要用户操作 —— 需要迁移数据、改配置或执行脚本
+        - 会破坏兼容性 —— 会改变现有行为或接口结构
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: 关联模块
+      options:
+        - 工单（提交、分类、SLA、状态流转、处理记录）
+        - 知识库（条目、检索、沉淀）
+        - AI 排障助手（报错诊断、排查步骤、引擎状态）
+        - 仪表盘（指标、趋势、分布）
+        - 部署与运维（Docker、备份、环境变量、CI）
+        - 认证与权限（注册、登录、成员、租户）
+        - 界面与体验（布局、样式、双语、演示页）
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: 其他补充（可选）
+      description: |
+        截图、相关 Issue 链接、参考的实现方案、你愿意参与实现等。
+      placeholder: |
+        相关讨论：#123
+        我可以自己提 PR 实现。
+    validations:
+      required: false

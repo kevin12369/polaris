@@ -1,0 +1,26 @@
+# 自动打标签
+#
+# 让 issue / PR 的分类不靠人工，减少维护者的重复劳动。
+# 标签需要先在仓库里存在，见 scripts/setup-labels.sh
+
+name: Labeler
+on:
+  issues:
+    types: [opened, labeled, unlabeled, reopened]
+  pull_request:
+    types: [opened, labeled, unlabeled, reopened, synchronize]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          # 同步更新配置：改完跑 scripts/setup-labels.sh 即可
+          configuration-path: .github/labeler.yml
+          sync-labels: true

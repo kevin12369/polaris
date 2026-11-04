@@ -1,0 +1,68 @@
+# 依赖自动更新
+#
+# 定期检查依赖的新版本并自动开 PR。
+# 不直接推 main —— 走 PR 是为了让 CI 先验证，避免新依赖把构建搞挂。
+
+version: 2
+
+updates:
+  # ---------- Python ----------
+  - package-ecosystem: pip
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - backend
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      # 同一次更新里的依赖合并成一个 PR，避免 PR 刷屏
+      python-minor:
+        update-types:
+          - minor
+          - patch
+      python-major:
+        update-types:
+          - major
+
+  # ---------- Node ----------
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - frontend
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      # Vite 大版本更新常伴随配置格式变化，单独成 PR 便于人工审查
+      vite-major:
+        update-types:
+          - major
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+      frontend-rest:
+        update-types:
+          - minor
+          - patch
+
+  # ---------- GitHub Actions ----------
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: "chore(ci)"

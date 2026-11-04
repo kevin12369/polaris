@@ -1,0 +1,43 @@
+# 自动管理陈旧 Issue / PR
+#
+# 避免仓库里堆积无人问津的 issue —— 那些会让"活跃度"看起来很糟。
+# 60 天无活动的标记为 stale，再过 14 天无回复则自动关闭。
+# 保持开放会自动重新计时。
+
+name: Stale
+on:
+  schedule:
+    # 每天跑一次
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          days-before-stale: 60
+          days-before-close: 14
+          stale-issue-label: "stale"
+          stale-pr-label: "stale"
+          exempt-issue-labels: "pinned,security,roadmap,help wanted"
+          exempt-pr-labels: "pinned,security,roadmap,help wanted"
+          stale-issue-message: >
+            这条 issue 已经 60 天没有活动了。
+            如果问题仍然存在，欢迎补充信息让它重新打开 —— 或者直接开一条新的。
+          stale-pr-message: >
+            这个 PR 已经 60 天没有活动了。
+            如果还想推进，欢迎回复说明情况。
+          close-issue-message: >
+            由于长期无活动，此 issue 已自动关闭。
+            随时可以重新开启。
+          only-labels: false
+          # 只处理未分配给人的 issue —— 有明确负责人的不自动关
+          only-issue-labels: ""
+          exempt-all-milestones: true

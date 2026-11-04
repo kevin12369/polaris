@@ -1,0 +1,29 @@
+name: Release Drafter
+
+# 自动生成 Release 说明，把已合并的 PR 按类型分组。
+# 版本号按语义化版本递增：major 变更 → v2.0.0，feat → v1.1.0，fix/docs → v1.0.1
+#
+# 发布流程：
+#   1. PR 合并到 main 后，draft release 自动更新
+#   2. 觉得可以发了，把 draft 转正式（gh release edit v1.1.0 --draft=false）
+#      或直接用 scripts/release.sh，它会读这里的版本号
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  update-draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: release-drafter/release-drafter@v6
+        with:
+          config-name: release-drafter.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
