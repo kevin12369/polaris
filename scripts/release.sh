@@ -121,10 +121,12 @@ gh release create "$VERSION" --repo "$REPO" \
   --notes-file "$NOTES_FILE"
 
 # ---------- 5. 上传源码包 ----------
+# 注意：归档放在当前目录下而非 /tmp —— 某些环境会拦截 /tmp 路径的写入/删除
 echo "==> 生成源码包"
-ARCHIVE="/tmp/polaris-${VERSION}.zip"
+ARCHIVE="./polaris-${VERSION}.zip"
 git archive --format=zip --prefix="polaris-${VERSION}/" -o "$ARCHIVE" "$VERSION"
 gh release upload "$VERSION" "$ARCHIVE" --repo "$REPO" --clobber
+rm -f "$ARCHIVE"
 
 rm -f "$NOTES_FILE"
 
