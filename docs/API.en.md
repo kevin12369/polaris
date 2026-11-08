@@ -344,6 +344,103 @@ Promote a ticket into a knowledge article.
 
 ---
 
+## Ticket attachments
+
+Attachments hold screenshots and logs. Files live on the server's disk; metadata lives in the database.
+
+### Security design
+
+| Threat | Defence |
+|---|---|
+| Renaming an executable to bypass the type check | Both the extension and the **file magic number** are verified — renaming changes nothing |
+| Path traversal (`../`) | Stored names are generated with `secrets.token_hex(16)` and contain no user input at all |
+| Stored XSS | Downloads force `Content-Disposition: attachment` + `X-Content-Type-Options: nosniff` + CSP sandbox |
+| Huge files filling the disk | Size is checked while writing, and the upload stops immediately when exceeded |
+| Cross-tenant access | Every operation filters on `company_id`; other tenants get 404 |
+
+**SVG is not on the allow list** — SVG is XML and can embed scripts, which browsers execute when
+the file is opened directly.
+
+Allowed types:
+
+| MIME | Extensions |
+|---|---|
+| `image/png` | `.png` |
+| `image/jpeg` | `.jpg` `.jpeg` |
+| `image/gif` | `.gif` |
+| `image/webp` | `.webp` |
+| `application/pdf` | `.pdf` |
+| `text/plain` | `.txt` `.log` `.md` `.csv` `.json` `.yaml` `.yml` `.xml` |
+| `application/zip` | `.zip` `.docx` `.xlsx` `.pptx` `.odt` `.ods` |
+
+Limits (adjustable via environment variables):
+
+```bash
+ATTACHMENT_MAX_BYTES=10485760          # 10 MB per file
+ATTACHMENT_MAX_FILES_PER_TICKET=10     # 10 per ticket
+ATTACHMENT_DIR=/app/data/attachments   # storage directory
+```
+
+### `GET /tickets/{ticket_id}/attachments`
+
+```json
+{
+  "total": 2,
+  "max_files": 10,
+  "max_bytes": 10485760,
+  "allowed_extensions": [".csv", ".docx", "..."],
+  "items": [
+    {
+      "id": 1,
+      "ticket_id": 12,
+      "original_name": "screenshot.png",
+      "content_type": "image/png",
+      "size": 24576,
+      "size_display": "24.0 KB",
+      "sha256": "a3f1...",
+      "uploader_name": "Alex",
+      "created_at": "2026-11-08T10:24:00",
+      "download_url": "/api/tickets/12/attachments/1/download"
+    }
+  ]
+}
+```
+
+### `POST /tickets/{ticket_id}/attachments`
+
+Upload (`multipart/form-data`, field name `file`).
+
+```bash
+curl -X POST http://<host>:8000/api/tickets/12/attachments \
+  -H "Authorization: Bearer $T" \
+  -F "file=@screenshot.png"
+```
+
+**Response `201`**: the new attachment.
+
+**Error `400`**: extension not allowed / content does not match the extension / empty file.
+**Error `409`**: attachment count limit reached.
+**Error `413`**: file exceeds the size limit.
+
+### `GET /tickets/{ticket_id}/attachments/{attachment_id}/download`
+
+Response headers:
+
+```
+Content-Disposition: attachment; filename="attachment.png"; filename*=UTF-8''%E6%88%AA%E5%9B%BE.png
+X-Content-Type-Options: nosniff
+Content-Security-Policy: default-src 'none'; sandbox
+```
+
+`filename` is the ASCII fallback, `filename*` is the RFC 5987 UTF-8 name — non-ASCII filenames
+land correctly in both old and new browsers.
+
+### `DELETE /tickets/{ticket_id}/attachments/{attachment_id}`
+
+Deletes the attachment and its file on disk.
+
+---
+
 ## Knowledge base
 
 ### `GET /kb`

@@ -5,6 +5,41 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-11-08
+
+### Added
+
+**Ticket attachments** (issue #15). Screenshots and logs can now be uploaded to a ticket from
+the detail page — troubleshooting lives on screenshots, and describing them in words is slow.
+
+Security is not just an extension check:
+
+- **Extension *and* file magic number are verified.** Renaming an executable to `.png` is
+  rejected — the content has to match the declared type.
+- **Storage names are random** (`secrets.token_hex(16)`) and contain no user input at all,
+  which rules out path traversal at the root rather than by filtering.
+- **Downloads are forced as attachments**, with `X-Content-Type-Options: nosniff` and a
+  CSP sandbox — an uploaded HTML or SVG file is never executed by the browser.
+- **SVG is excluded** from the allow list: SVG is XML and can embed scripts.
+- Size is checked while writing, so an oversized upload is cut off before it fills the disk.
+- Every operation filters on `company_id`; cross-tenant access returns 404.
+
+Limits are configurable: `ATTACHMENT_MAX_BYTES` (10 MB), `ATTACHMENT_MAX_FILES_PER_TICKET` (10),
+`ATTACHMENT_DIR`.
+
+Also: 20 new assertions in `tests/test_attachments.py` covering the magic-number checks,
+path traversal defence, download headers and tenant isolation.
+
+### Fixed
+
+- **Chinese filenames crashed downloads.** HTTP headers are latin-1 only, so a file named
+  `截图.png` raised `UnicodeEncodeError` and returned 500. Now uses RFC 5987
+  (`filename*=UTF-8''...`) with an ASCII fallback for older browsers.
+- The e2e suite failed in any environment with `HTTP_PROXY` set — `urllib` read the proxy
+  setting and forwarded local requests to it. It now builds an opener with proxies disabled.
+- `await file.read()` returned nothing because the file pointer sat at the end after form
+  parsing. Now seeks to the start first.
+
 ## [1.1.0] - 2026-11-04
 
 ### Added

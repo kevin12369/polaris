@@ -23,6 +23,11 @@ BASE = os.getenv("TEST_BASE_URL", "http://127.0.0.1:8100/api")
 
 # 每次运行用唯一邮箱，避免重复执行时冲突
 RUN_ID = os.getenv("TEST_RUN_ID") or __import__("time").strftime("%H%M%S")
+
+# 测试打的是本机服务，不能走系统代理。
+# 很多环境设了 HTTP_PROXY，urllib 默认会读它，导致本机请求被转发到代理
+# 而失败（"upstream connect failed"）。这里显式建一个无代理的 opener。
+_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 EMAIL_MAIN = f"e2e-main-{RUN_ID}@example.com"
 EMAIL_OTHER = f"e2e-other-{RUN_ID}@example.com"
 EMAIL_AGENT = f"e2e-agent-{RUN_ID}@example.com"
@@ -53,7 +58,7 @@ def call(method: str, path: str, token: str | None = None, body: dict | None = N
         method=method,
     )
     try:
-        with urllib.request.urlopen(req, timeout=25) as r:
+        with _OPENER.open(req, timeout=25) as r:
             return r.status, json.loads(r.read().decode() or "{}")
     except urllib.error.HTTPError as e:
         raw = e.read().decode()

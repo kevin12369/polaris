@@ -181,6 +181,18 @@ export const DICT = {
   'td.aiRun': '生成排查步骤|Generate steps',
   'td.aiAnalyzing': '分析中…|Analysing…',
   'td.createdVia': '创建于|Created',
+
+  // ---------- 附件 ----------
+  'att.title': '附件|Attachments',
+  'att.empty': '还没有附件|No attachments yet',
+  'att.upload': '＋ 上传附件|Upload attachment',
+  'att.uploading': '上传中…|Uploading…',
+  'att.download': '下载|Download',
+  'att.delete': '删除|Delete',
+  'att.hint': '单个文件最大 {max}，最多 {n} 个|Max {max} per file',
+  'att.maxFiles': '最多只能上传 {n} 个附件|At most {n} attachments',
+  'att.tooLarge': '文件超过 {n} 上限|File exceeds the {n} limit',
+  'att.deleteConfirm': '确认删除附件「{name}」？|Delete the attachment "{name}"?',
   'td.source': '来源|Source',
   'td.aiJudgedBadge': 'AI 判定 {c}%|AI {c}%',
 

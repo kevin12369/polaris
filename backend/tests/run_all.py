@@ -3,10 +3,11 @@
 用法：
     python tests/run_all.py
 
-包含三组测试：
-- test_sla.py        SLA 工作时间计算（20 项）
-- test_retrieval.py  检索质量与相关性判据（24 项）
-- test_e2e.py        端到端主流程（49 项）
+包含四组测试：
+- test_sla.py         SLA 工作时间计算（30 项）
+- test_retrieval.py   检索质量与相关性判据（24 项）
+- test_attachments.py 附件安全校验（20 项）
+- test_e2e.py         端到端主流程（49 项）
 
 e2e 需要后端已启动：
     python -m uvicorn app.main:app --port 8100
@@ -34,6 +35,7 @@ def main() -> int:
     results = [
         ("SLA 工作时间计算", "test_sla.py"),
         ("检索质量", "test_retrieval.py"),
+        ("附件安全", "test_attachments.py"),
         ("端到端主流程", "test_e2e.py"),
     ]
 

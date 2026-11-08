@@ -27,6 +27,7 @@ Polaris pulls those scattered habits into four things:
 | Module | What it does |
 |---|---|
 | **Tickets** | Submit → auto-classify → SLA countdown → status transitions |
+| **Attachments** | Screenshot and log uploads (extension + magic-number checks) |
 | **Knowledge base** | Promote a resolved ticket to a KB article with one click |
 | **AI troubleshooting** | Paste an error → search the knowledge base → get actionable steps |
 | **Dashboard** | Ticket volume / avg first response / SLA breach rate / KB hit rate |
@@ -129,6 +130,23 @@ make-up working days do:
 - You can add your own days off (company shutdowns) and extra working days (on-call shifts)
 
 Years without bundled data fall back to the regular weekday schedule instead of failing.
+
+### Attachments (since v1.2.0)
+
+The ticket detail page accepts screenshots and logs — customers send screenshots, and
+describing them in words is slow.
+
+The checks are not just extension-based:
+
+- **Extension *and* file magic number are verified.** Renaming an `.exe` to `.png` is rejected.
+- **Storage names are random** (`secrets.token_hex(16)`) and contain no user input, which rules
+  out path traversal at the root.
+- **Downloads are forced as attachments**, with `nosniff` and a CSP sandbox — an uploaded
+  HTML/SVG file is never executed by the browser.
+- **SVG is not on the allow list** — SVG is XML and can embed scripts.
+
+Allowed: png / jpg / gif / webp / pdf / txt / log / md / csv / json / yaml / xml / zip / docx /
+xlsx / pptx. Defaults are 10 MB per file and 10 per ticket, configurable via environment variables.
 
 ### Knowledge base
 
@@ -303,7 +321,8 @@ runs every Monday.
 - No file attachments on tickets — descriptions and error text only.
 - No inbound email or chat ingestion yet; `POST /api/tickets` is the integration point.
 - Bundled holiday data currently covers 2026 only (`backend/app/holidays.py`).
-- No ticket attachments yet; email/chat ingestion needs a webhook on your side (`POST /api/tickets` works as the endpoint).
+- Attachments are not virus-scanned — only the type allow list and magic-number check are applied.
+- Email/chat ingestion needs a webhook on your side (`POST /api/tickets` works as the endpoint).
 - The demo page is static with mock data; the real UI needs the backend.
 
 ## License

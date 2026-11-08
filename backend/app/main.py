@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from .config import APP_NAME, APP_VERSION, CORS_ORIGINS, LLM_ENABLED, LLM_MODEL
 from .db import init_db
 from .migrations import run_migrations
-from .routers import assistant, auth, dashboard, kb, settings, tickets
+from .routers import assistant, attachments, auth, dashboard, kb, settings, tickets
 
 
 def create_app() -> FastAPI:
@@ -58,6 +58,7 @@ def create_app() -> FastAPI:
     app.include_router(auth.router)
     app.include_router(settings.router)
     app.include_router(tickets.router)
+    app.include_router(attachments.router)
     app.include_router(kb.router)
     app.include_router(assistant.router)
     app.include_router(dashboard.router)

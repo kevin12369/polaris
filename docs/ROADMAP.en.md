@@ -28,12 +28,15 @@ days off. v1.1.0 fixes that.
 
 | Feature | Description | Why |
 |---|---|---|
-| Ticket attachments | Upload screenshots and log files | Troubleshooting lives on screenshots; text descriptions slow everything down |
+| ✅ Ticket attachments | Upload screenshots and log files | Troubleshooting lives on screenshots; text descriptions slow everything down |
 | Email → ticket | IMAP polling or webhook | Customers report issues by email out of habit |
 | WeChat Work ingestion | Enterprise WeChat / Official Account messages → tickets | Target customers communicate on WeChat |
 
-The hard part here is file storage and security (type validation, size limits, malware
-scanning). Priority is ensuring an uploaded file can never be downloaded and executed.
+Attachments are done (v1.2.0): extension *and* magic-number checks, random storage paths,
+downloads forced as attachments with `nosniff`, SVG excluded, 10 MB per file and 10 per ticket.
+
+Virus scanning is not wired up yet — only the type allow list and magic-number check are applied.
+Channel ingestion is still queued.
 
 ### v1.3 — Knowledge base improvements
 
@@ -56,6 +59,7 @@ scanning). Priority is ensuring an uploaded file can never be downloaded and exe
 
 | Version | Contents | Date |
 |---|---|---|
+| v1.2.0 | Ticket attachments: screenshots and logs, with full security checks | 2026-11 |
 | v1.1.0 | Statutory holiday calendar: built-in + per-workspace overrides | 2026-11 |
 | v1.0.0 | First public release: tickets / knowledge base / AI troubleshooting / dashboard | 2026-11-02 |
 

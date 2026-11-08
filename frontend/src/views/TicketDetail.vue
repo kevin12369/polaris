@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { assistantApi, kbApi, ticketApi } from '../api'
+import { assistantApi, attachmentApi, kbApi, ticketApi } from '../api'
 import { fmtMinutes, fmtRemaining, fmtTime, PRIORITY_TONE, STATUS_TONE } from '../utils'
 import { t, catLabel, statusLabel, priLabel } from '../i18n'
 
@@ -23,6 +23,113 @@ const aiResult = ref(null)
 const aiLoading = ref(false)
 const aiText = ref('')
 const showAi = ref(false)
+
+// ---- 附件 ----
+const attachments = ref([])
+const attMeta = ref({ max_files: 10, max_bytes: 10485760, allowed_extensions: [] })
+const uploading = ref(false)
+const attError = ref('')
+const fileInput = ref(null)
+
+/** 文件图标：按扩展名选，纯 CSS 字符不引入图标库 */
+function attIcon(name = '') {
+  const ext = (name.split('.').pop() || '').toLowerCase()
+  if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)) return '🖼'
+  if (ext === 'pdf') return '📕'
+  if (['zip', 'docx', 'xlsx', 'pptx'].includes(ext)) return '🗜'
+  if (['txt', 'log', 'md', 'csv', 'json'].includes(ext)) return '📄'
+  return '📎'
+}
+
+/** 字节数转可读体积 */
+function fmtSize(bytes) {
+  if (!bytes && bytes !== 0) return '—'
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+}
+
+async function loadAttachments() {
+  if (!ticket.value) return
+  try {
+    const res = await attachmentApi.list(ticket.value.id)
+    attachments.value = res.items || []
+    attMeta.value = {
+      max_files: res.max_files,
+      max_bytes: res.max_bytes,
+      allowed_extensions: res.allowed_extensions || [],
+    }
+  } catch (e) {
+    // 附件加载失败不应阻塞详情页
+    console.warn('附件列表加载失败:', e.message)
+  }
+}
+
+function pickFile() {
+  fileInput.value?.click()
+}
+
+/**
+ * 处理文件选择。
+ *
+ * 两个坑：
+ * 1. 清空 input.value 会触发 change 事件，导致递归上传（FormData 为空）。
+ *    用 uploading 标志位防重入。
+ * 2. 不能提前清空 input，也不能克隆 File —— 浏览器会释放原 File 的关联，
+ *    克隆出来的 File 同样可能内容为空（后端会报「文件为空」）。
+ *    所以：先上传，用完再清空。
+ */
+async function onFilePicked(e) {
+  const input = e.target
+  if (uploading.value) return
+
+  const file = input.files?.[0]
+  if (!file) return
+  attError.value = ''
+
+  if (attachments.value.length >= attMeta.value.max_files) {
+    attError.value = t('att.maxFiles', { n: attMeta.value.max_files })
+    input.value = ''
+    return
+  }
+  if (file.size > attMeta.value.max_bytes) {
+    attError.value = t('att.tooLarge', { n: fmtSize(attMeta.value.max_bytes) })
+    input.value = ''
+    return
+  }
+
+  uploading.value = true
+  try {
+    await attachmentApi.upload(ticket.value.id, file)
+    await loadAttachments()
+  } catch (err) {
+    attError.value = err.message
+  } finally {
+    uploading.value = false
+    // 上传结束才清空：让「连续选同一个文件」也能触发 change 事件。
+    // 此时 uploading 已为 false，清空触发的 change 会被上面的守卫拦下。
+    input.value = ''
+  }
+}
+
+async function downloadAtt(att) {
+  try {
+    await attachmentApi.download(ticket.value.id, att.id, att.original_name)
+  } catch (e) {
+    attError.value = e.message
+  }
+}
+
+async function removeAtt(att) {
+  if (!window.confirm(t('att.deleteConfirm', { name: att.original_name }))) return
+  attError.value = ''
+  try {
+    await attachmentApi.remove(ticket.value.id, att.id)
+    await loadAttachments()
+  } catch (e) {
+    attError.value = e.message
+  }
+}
 
 const sla = computed(() => {
   if (!ticket.value) return null
@@ -68,6 +175,8 @@ async function load() {
     const res = await ticketApi.get(route.params.id)
     ticket.value = res.ticket
     events.value = res.events
+    // 附件独立加载：失败也不该影响详情页主体
+    await loadAttachments()
   } catch (e) {
     error.value = e.message
   } finally {
@@ -198,6 +307,62 @@ onMounted(async () => {
               <div class="res-label">处理记录</div>
               {{ ticket.resolution_note }}
             </div>
+          </div>
+        </div>
+
+        <!-- 附件 -->
+        <div class="card" style="margin-top: 14px">
+          <div class="card-head">
+            <h3>{{ t('att.title') }}</h3>
+            <span class="muted tiny">
+              {{ attachments.length }} / {{ attMeta.max_files }}
+            </span>
+          </div>
+          <div class="card-body">
+            <!-- 文件列表 -->
+            <div v-if="attachments.length" class="att-list">
+              <div v-for="att in attachments" :key="att.id" class="att-item">
+                <span class="att-icon">{{ attIcon(att.original_name) }}</span>
+                <div class="att-info">
+                  <div class="att-name truncate" :title="att.original_name">
+                    {{ att.original_name }}
+                  </div>
+                  <div class="att-meta">
+                    {{ fmtSize(att.size) }} · {{ att.uploader_name }} ·
+                    {{ fmtTime(att.created_at) }}
+                  </div>
+                </div>
+                <button class="btn btn-ghost btn-sm" :title="t('att.download')" @click="downloadAtt(att)">
+                  ↓
+                </button>
+                <button class="btn btn-ghost btn-sm danger" :title="t('att.delete')" @click="removeAtt(att)">
+                  ×
+                </button>
+              </div>
+            </div>
+            <div v-else class="empty">{{ t('att.empty') }}</div>
+
+            <!-- 上传 -->
+            <div class="att-upload">
+              <input
+                ref="fileInput"
+                type="file"
+                class="att-input"
+                :accept="attMeta.allowed_extensions.join(',')"
+                @change="onFilePicked"
+              />
+              <button
+                class="btn btn-sm"
+                :disabled="uploading || attachments.length >= attMeta.max_files"
+                @click="pickFile"
+              >
+                {{ uploading ? t('att.uploading') : t('att.upload') }}
+              </button>
+              <span class="muted tiny">
+                {{ t('att.hint', { max: fmtSize(attMeta.max_bytes) }) }}
+              </span>
+            </div>
+            <div v-if="attError" class="msg error" style="margin-top: 8px">{{ attError }}</div>
           </div>
         </div>
 
@@ -402,6 +567,60 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+/* ---------- 附件 ---------- */
+.att-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.att-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.att-icon {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.att-info {
+  flex: 1;
+  min-width: 0;
+}
+.att-name {
+  font-size: 12.5px;
+  color: var(--text);
+}
+.att-meta {
+  font-size: 11px;
+  color: var(--text-mute);
+  margin-top: 1px;
+}
+/* 下载 / 删除按钮：固定宽度，避免换行 */
+.att-item .btn {
+  flex-shrink: 0;
+  min-width: 30px;
+  padding: 0 8px;
+}
+.att-upload {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+/* 隐藏原生 file input，由按钮触发 */
+.att-input {
+  display: none;
+}
+.btn.danger:hover {
+  color: var(--danger);
+}
+
 .grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 316px;

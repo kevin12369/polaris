@@ -332,6 +332,109 @@ closed       → in_progress
 
 ---
 
+## 工单附件
+
+附件用于放截图和日志。文件存在服务器磁盘上，元数据在数据库里。
+
+### 安全设计
+
+| 威胁 | 防御 |
+|---|---|
+| 改扩展名绕过类型检查 | 同时校验扩展名与**文件魔数**，改扩展名无效 |
+| 路径穿越（`../`） | 存储文件名用 `secrets.token_hex(16)` 随机生成，不含任何用户输入 |
+| 存储型 XSS | 下载强制 `Content-Disposition: attachment` + `X-Content-Type-Options: nosniff` + CSP sandbox |
+| 超大文件占满磁盘 | 边写边判大小，超限立即中断 |
+| 跨租户访问 | 所有操作按 `company_id` 过滤，跨租户返回 404 |
+
+**SVG 不在白名单内** —— SVG 是 XML，可以内嵌脚本，浏览器直接打开会执行。
+
+允许的类型：
+
+| MIME | 扩展名 |
+|---|---|
+| `image/png` | `.png` |
+| `image/jpeg` | `.jpg` `.jpeg` |
+| `image/gif` | `.gif` |
+| `image/webp` | `.webp` |
+| `application/pdf` | `.pdf` |
+| `text/plain` | `.txt` `.log` `.md` `.csv` `.json` `.yaml` `.yml` `.xml` |
+| `application/zip` | `.zip` `.docx` `.xlsx` `.pptx` `.odt` `.ods` |
+
+限制（可用环境变量调整）：
+
+```bash
+ATTACHMENT_MAX_BYTES=10485760          # 单文件 10 MB
+ATTACHMENT_MAX_FILES_PER_TICKET=10     # 单工单 10 个
+ATTACHMENT_DIR=/app/data/attachments   # 存储目录
+```
+
+### `GET /tickets/{ticket_id}/attachments`
+
+列出工单附件。
+
+```json
+{
+  "total": 2,
+  "max_files": 10,
+  "max_bytes": 10485760,
+  "allowed_extensions": [".csv", ".docx", "..."],
+  "items": [
+    {
+      "id": 1,
+      "ticket_id": 12,
+      "original_name": "截图.png",
+      "content_type": "image/png",
+      "size": 24576,
+      "size_display": "24.0 KB",
+      "sha256": "a3f1...",
+      "uploader_name": "张三",
+      "created_at": "2026-11-08T10:24:00",
+      "download_url": "/api/tickets/12/attachments/1/download"
+    }
+  ]
+}
+```
+
+### `POST /tickets/{ticket_id}/attachments`
+
+上传附件（`multipart/form-data`，字段名 `file`）。
+
+```bash
+curl -X POST http://<host>:8000/api/tickets/12/attachments \
+  -H "Authorization: Bearer $T" \
+  -F "file=@screenshot.png"
+```
+
+**响应 `201`**：新建的附件对象。
+
+**错误 `400`**：
+- 扩展名不在白名单
+- 文件内容与扩展名不匹配（魔数校验失败）
+- 文件为空
+
+**错误 `409`**：单工单附件数量已达上限。
+
+**错误 `413`**：文件超过大小上限。
+
+### `GET /tickets/{ticket_id}/attachments/{attachment_id}/download`
+
+下载附件。响应头：
+
+```
+Content-Disposition: attachment; filename="attachment.png"; filename*=UTF-8''%E6%88%AA%E5%9B%BE.png
+X-Content-Type-Options: nosniff
+Content-Security-Policy: default-src 'none'; sandbox
+```
+
+`filename` 是 ASCII 回退名，`filename*` 是 RFC 5987 的 UTF-8 完整名 —— 中文文件名在
+新旧浏览器下都能正确落地。
+
+### `DELETE /tickets/{ticket_id}/attachments/{attachment_id}`
+
+删除附件，同时删除磁盘文件。
+
+---
+
 ## 知识库
 
 ### `GET /kb`

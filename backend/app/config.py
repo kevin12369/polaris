@@ -10,7 +10,7 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 # ---- 基础 ----
 APP_NAME = "Polaris 北极星 · 客服工单管理平台"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.2.0"
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-me-in-production")
 TOKEN_TTL_HOURS = int(os.getenv("TOKEN_TTL_HOURS", "72"))
 CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()]
@@ -49,6 +49,29 @@ SLA_POLICY: dict[str, dict[str, int]] = {
     "P4": {"response": 1440, "resolve": 6720, "label": "低"},
 }
 DEFAULT_PRIORITY = "P3"
+
+# ---- 附件上传 ----
+# 存储目录：默认在 DATA_DIR 下，可用环境变量单独指定
+ATTACHMENT_DIR = Path(os.getenv("ATTACHMENT_DIR", str(DATA_DIR / "attachments")))
+ATTACHMENT_DIR.mkdir(parents=True, exist_ok=True)
+
+# 单文件大小上限（默认 10 MB）
+ATTACHMENT_MAX_BYTES = int(os.getenv("ATTACHMENT_MAX_BYTES", str(10 * 1024 * 1024)))
+# 单工单附件数量上限
+ATTACHMENT_MAX_FILES_PER_TICKET = int(os.getenv("ATTACHMENT_MAX_FILES_PER_TICKET", "10"))
+
+# 类型白名单：MIME -> 允许的扩展名
+# 刻意保守 —— 排障真正需要的是截图和日志。
+# 不含 SVG：SVG 是 XML，可内嵌脚本，浏览器直接打开会执行（存储型 XSS）。
+ATTACHMENT_ALLOWED_TYPES: dict[str, set[str]] = {
+    "image/png": {".png"},
+    "image/jpeg": {".jpg", ".jpeg"},
+    "image/gif": {".gif"},
+    "image/webp": {".webp"},
+    "application/pdf": {".pdf"},
+    "text/plain": {".txt", ".log", ".md", ".csv", ".json", ".yaml", ".yml", ".xml"},
+    "application/zip": {".zip", ".docx", ".xlsx", ".pptx", ".odt", ".ods"},
+}
 
 # ---- 工单分类字典 ----
 TICKET_CATEGORIES = [

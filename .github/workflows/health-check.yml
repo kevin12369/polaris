@@ -41,6 +41,7 @@ jobs:
         run: |
           python tests/test_sla.py
           python tests/test_retrieval.py
+          python tests/test_attachments.py
 
       - name: 端到端测试
         working-directory: backend

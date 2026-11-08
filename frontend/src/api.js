@@ -71,6 +71,36 @@ export const api = {
   put: (p, b, opts) => request('PUT', p, b ?? {}, opts),
   patch: (p, b, opts) => request('PATCH', p, b ?? {}, opts),
   del: (p, opts) => request('DELETE', p, undefined, opts),
+  // 文件上传：multipart/form-data，不能设 Content-Type（要带 boundary）
+  upload: (p, file, opts = {}) => {
+    const headers = { Accept: 'application/json' }
+    if (token) headers.Authorization = `Bearer ${token}`
+    const form = new FormData()
+    form.append('file', file, file.name)
+    return fetch(BASE + p, { method: 'POST', headers, body: form }).then(async (res) => {
+      const text = await res.text()
+      let payload = null
+      if (text) {
+        try {
+          payload = JSON.parse(text)
+        } catch {
+          payload = text
+        }
+      }
+      if (!res.ok) {
+        if (res.status === 401 && !opts.silentAuth) {
+          clearSession()
+          if (!location.hash.startsWith('#/login')) location.hash = '#/login'
+        }
+        const msg =
+          (payload && payload.detail &&
+            (typeof payload.detail === 'string' ? payload.detail : payload.detail[0]?.msg)) ||
+          `上传失败 (${res.status})`
+        throw new ApiError(msg, res.status, payload)
+      }
+      return payload
+    })
+  },
 }
 
 // ---- 认证 ----
@@ -104,6 +134,30 @@ export const ticketApi = {
   comment: (id, note) => api.post(`/tickets/${id}/comment`, { note }),
   suggest: (id, content) => api.post(`/tickets/${id}/suggest`, { content }),
   promoteToKb: (id, payload = {}) => api.post(`/tickets/${id}/promote-to-kb`, payload),
+}
+
+// ---- 附件 ----
+export const attachmentApi = {
+  list: (ticketId) => api.get(`/tickets/${ticketId}/attachments`),
+  upload: (ticketId, file) => api.upload(`/tickets/${ticketId}/attachments`, file),
+  remove: (ticketId, attachmentId) => api.del(`/tickets/${ticketId}/attachments/${attachmentId}`),
+  // 下载需要带令牌，不能用普通 <a href>，改为取 blob 后触发下载
+  download: async (ticketId, attachmentId, filename) => {
+    const res = await fetch(`${BASE}/tickets/${ticketId}/attachments/${attachmentId}/download`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (!res.ok) throw new ApiError(`下载失败 (${res.status})`, res.status)
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename || 'download'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    // 释放对象 URL，避免内存泄漏
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  },
 }
 
 // ---- 知识库 ----

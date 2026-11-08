@@ -24,11 +24,12 @@ jobs:
         working-directory: backend
         run: pip install -r requirements.txt
 
-      - name: 单元测试（SLA + 检索）
+      - name: 单元测试（SLA + 检索 + 附件安全）
         working-directory: backend
         run: |
           python tests/test_sla.py
           python tests/test_retrieval.py
+          python tests/test_attachments.py
 
       - name: 端到端测试（启动服务后立即执行）
         working-directory: backend

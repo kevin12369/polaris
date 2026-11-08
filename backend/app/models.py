@@ -105,6 +105,38 @@ class Ticket(Base):
     events: Mapped[list["TicketEvent"]] = relationship(
         back_populates="ticket", cascade="all, delete-orphan", order_by="TicketEvent.id"
     )
+    attachments: Mapped[list["TicketAttachment"]] = relationship(
+        back_populates="ticket", cascade="all, delete-orphan", order_by="TicketAttachment.id"
+    )
+
+
+class TicketAttachment(Base):
+    """工单附件。
+
+    文件本体存在磁盘（见 app/storage.py），这里只存元数据。
+    stored_name 是随机生成的，不含用户输入 —— 这是路径穿越防御的关键。
+    """
+
+    __tablename__ = "ticket_attachments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    ticket_id: Mapped[int] = mapped_column(ForeignKey("tickets.id", ondelete="CASCADE"), index=True)
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id", ondelete="CASCADE"), index=True)
+    uploader_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+
+    # 磁盘上的随机文件名（唯一，下载时用它定位）
+    stored_name: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    # 用户上传时的原始文件名，仅作展示
+    original_name: Mapped[str] = mapped_column(String(255))
+    # 校验后的真实 MIME（不是浏览器声称的）
+    content_type: Mapped[str] = mapped_column(String(80))
+    size: Mapped[int] = mapped_column(Integer, default=0)
+    sha256: Mapped[str] = mapped_column(String(64), default="")
+
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=utcnow, index=True)
+
+    ticket: Mapped["Ticket"] = relationship(back_populates="attachments")
+    uploader: Mapped["User"] = relationship()
 
 
 class TicketEvent(Base):
