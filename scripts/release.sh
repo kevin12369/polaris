@@ -126,9 +126,10 @@ echo "==> 生成源码包"
 ARCHIVE="./polaris-${VERSION}.zip"
 git archive --format=zip --prefix="polaris-${VERSION}/" -o "$ARCHIVE" "$VERSION"
 gh release upload "$VERSION" "$ARCHIVE" --repo "$REPO" --clobber
-rm -f "$ARCHIVE"
+# 清理失败不影响发布结果（某些环境的删除操作会被拦截）
+rm -f "$ARCHIVE" 2>/dev/null || true
 
-rm -f "$NOTES_FILE"
+rm -f "$NOTES_FILE" 2>/dev/null || true
 
 echo
 echo "==> 发布完成"
