@@ -84,7 +84,7 @@ jobs:
 
       - name: 失败时自动开 issue
         if: failure()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const title = `[CI] 每周健康检查失败 — ${new Date().toISOString().slice(0, 10)}`;
